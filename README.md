@@ -1,4 +1,4 @@
-# Build Telemetry
+# Chromium Build Telemetry
 
 Self-hosted telemetry for chromium build. Collects per-build stats (duration,
 exit code, reclient/ccache hit rate, target, args, platform) and serves a Vue

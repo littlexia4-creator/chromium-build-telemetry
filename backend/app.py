@@ -17,7 +17,7 @@ from . import stats
 
 STATIC_DIR = Path(os.environ.get("STATIC_DIR", "/app/static"))
 
-app = FastAPI(title="Build Telemetry", version="0.2.0")
+app = FastAPI(title="Chromium Build Telemetry", version="0.2.0")
 
 app.add_middleware(
     CORSMiddleware,

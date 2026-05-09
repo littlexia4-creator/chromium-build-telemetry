@@ -1,6 +1,6 @@
 openapi: 3.0.3
 info:
-  title: Build Telemetry API
+  title: Chromium Build Telemetry API
   description: |
     Self-hosted telemetry for chromium build. Records per-build stats
     (duration, exit code, reclient/ccache hit rate, target, args, platform)

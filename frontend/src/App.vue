@@ -5,7 +5,7 @@ import { RouterView, RouterLink } from 'vue-router'
 <template>
   <el-container class="root">
     <el-header class="header">
-      <RouterLink to="/" class="brand">Build Telemetry</RouterLink>
+      <RouterLink to="/" class="brand">Chromium Build Telemetry</RouterLink>
       <span class="sub">Chromium build stats</span>
     </el-header>
     <el-main class="main">

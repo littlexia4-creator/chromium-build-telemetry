@@ -1,0 +1,12 @@
+services:
+  telemetry:
+    build: .
+    image: build-telemetry:latest
+    container_name: build-telemetry
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - telemetry-data:/data
+volumes:
+  telemetry-data:

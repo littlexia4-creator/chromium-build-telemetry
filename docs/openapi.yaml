@@ -1,0 +1,500 @@
+openapi: 3.0.3
+info:
+  title: Build Telemetry API
+  description: |
+    Self-hosted telemetry for chromium build. Records per-build stats
+    (duration, exit code, reclient/ccache hit rate, target, args, platform)
+    and serves a Vue dashboard.
+
+    **Base path:** `/api`
+    **Auth:** none (corp-network only)
+
+    ## Lifecycle
+    1. `POST /api/start`  — emit when `build.sh` begins (with `reclient_enabled=true`).
+       Server inserts a row, status=`running`, returns `{id}`.
+    2. `POST /api/ingest` — emit when `build.sh` finishes. Pass `build_id` to
+       UPDATE the started row (preserves earlier fields). Without `build_id`,
+       INSERT a standalone row (legacy path).
+  version: "0.2.0"
+  contact:
+    name: build-telemetry
+    url: https://github.com/littlexia4-creator/chromium-build-telemetry
+
+servers:
+  - url: http://11.164.90.44:8080
+    description: corp-net deployment
+  - url: http://localhost:8080
+    description: local dev
+
+tags:
+  - name: lifecycle
+    description: build start / finish ingestion
+  - name: query
+    description: list / detail
+  - name: stats
+    description: aggregated dashboard data
+  - name: meta
+    description: health / utility
+
+paths:
+
+  /api/health:
+    get:
+      tags: [meta]
+      summary: Liveness probe
+      operationId: health
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Health"
+              examples:
+                ok:
+                  value: { ok: true }
+
+  /api/start:
+    post:
+      tags: [lifecycle]
+      summary: Record a build kickoff
+      description: |
+        Insert a new row with `status=running` and `started_ts=ts`. Returns the
+        generated row id, which the client must echo back as `build_id` on the
+        finishing `/api/ingest` call to merge into the same record.
+      operationId: startBuild
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StartRequest"
+            examples:
+              minimal:
+                summary: minimal kickoff
+                value:
+                  ts: 1730983200
+                  email: user@example.com
+                  reclient_enabled: true
+              rich:
+                summary: rich kickoff
+                value:
+                  ts: 1730983200
+                  email: user@example.com
+                  repo: ssh://gerrit/.../desktop
+                  branch: main_144
+                  commit_sha: abc1234
+                  platform: linux-x64
+                  ncpu: 64
+                  build_type: Debug
+                  target: chrome
+                  args: "-d --reclient"
+                  dir: out/Debug
+                  reclient_enabled: true
+      responses:
+        "200":
+          description: row inserted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StartResponse"
+              examples:
+                ok: { value: { id: 42 } }
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /api/ingest:
+    post:
+      tags: [lifecycle]
+      summary: Record build finish stats
+      description: |
+        Two modes:
+        * **Update mode** — body contains `build_id`. UPDATE the row with that
+          id; only fields present in the payload are overwritten (Nones skipped
+          so /api/start data is preserved). Sets `status='finished'`,
+          `finished_ts=now()`.
+        * **Insert mode** — no `build_id`. INSERT a new row. Used as fallback
+          if `/api/start` was skipped or failed.
+      operationId: ingestBuild
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IngestRequest"
+            examples:
+              update:
+                summary: paired with /api/start
+                value:
+                  build_id: 42
+                  ts: 1730984591
+                  total_time: 1391
+                  ninja_total_time: 1305
+                  exit_code: 0
+                  rbe: { hits: 12000, misses: 800, local_fallback: 12, total_actions: 12812 }
+                  ccache: { direct_hit: 8000, preproc_hit: 200, miss: 600, size_kib: 64000000 }
+              insert:
+                summary: standalone (no /api/start)
+                value:
+                  ts: 1730984591
+                  email: user@example.com
+                  branch: main_144
+                  platform: linux-x64
+                  total_time: 1391
+                  ninja_total_time: 1305
+                  exit_code: 0
+                  reclient_enabled: true
+      responses:
+        "200":
+          description: row inserted or updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IngestResponse"
+              examples:
+                updated: { value: { id: 42, updated: true } }
+                inserted: { value: { id: 43, updated: false } }
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/builds:
+    get:
+      tags: [query]
+      summary: List builds (paginated, filterable)
+      operationId: listBuilds
+      parameters:
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 500, default: 100 }
+        - in: query
+          name: offset
+          schema: { type: integer, minimum: 0, default: 0 }
+        - in: query
+          name: user
+          description: exact match on `user_email`
+          schema: { type: string }
+        - in: query
+          name: platform
+          schema: { type: string }
+        - in: query
+          name: exit_code
+          schema: { type: integer }
+        - in: query
+          name: status
+          schema: { type: string, enum: [running, finished] }
+        - in: query
+          name: since
+          description: unix epoch seconds; rows with `ts >= since`
+          schema: { type: integer }
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BuildList"
+
+  /api/builds/{build_id}:
+    get:
+      tags: [query]
+      summary: Single build with full row + raw payload
+      operationId: getBuild
+      parameters:
+        - in: path
+          name: build_id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BuildDetail"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/stats/summary:
+    get:
+      tags: [stats]
+      summary: Top-level dashboard cards
+      operationId: statsSummary
+      parameters:
+        - in: query
+          name: days
+          schema: { type: integer, minimum: 1, default: 7 }
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Summary"
+
+  /api/stats/timeseries:
+    get:
+      tags: [stats]
+      summary: Per-day build counts + average time
+      operationId: statsTimeseries
+      parameters:
+        - in: query
+          name: days
+          schema: { type: integer, minimum: 1, default: 14 }
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/TsPoint" }
+
+  /api/stats/by_user:
+    get:
+      tags: [stats]
+      summary: Top users by build count
+      operationId: statsByUser
+      parameters:
+        - in: query
+          name: days
+          schema: { type: integer, minimum: 1, default: 14 }
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/UserStat" }
+
+  /api/stats/by_platform:
+    get:
+      tags: [stats]
+      summary: Build counts grouped by platform
+      operationId: statsByPlatform
+      parameters:
+        - in: query
+          name: days
+          schema: { type: integer, minimum: 1, default: 14 }
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/PlatStat" }
+
+  /api/stats/distinct:
+    get:
+      tags: [stats]
+      summary: Distinct values for filter dropdowns
+      operationId: statsDistinct
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Distinct"
+
+components:
+
+  responses:
+    BadRequest:
+      description: invalid request body
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    NotFound:
+      description: resource not found
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+
+  schemas:
+
+    Health:
+      type: object
+      required: [ok]
+      properties:
+        ok: { type: boolean, example: true }
+
+    Error:
+      type: object
+      required: [detail]
+      properties:
+        detail: { type: string, example: "build_id 42 not found" }
+
+    RbeStats:
+      type: object
+      properties:
+        hits:           { type: integer, nullable: true }
+        misses:         { type: integer, nullable: true }
+        local_fallback: { type: integer, nullable: true }
+        total_actions:  { type: integer, nullable: true }
+
+    CcacheStats:
+      type: object
+      properties:
+        direct_hit:  { type: integer, nullable: true }
+        preproc_hit: { type: integer, nullable: true }
+        miss:        { type: integer, nullable: true }
+        size_kib:    { type: integer, nullable: true }
+
+    StartRequest:
+      type: object
+      description: |
+        Common build identification fields. All optional except none —
+        anything missing is stored as NULL. The server reads `ts` (unix epoch
+        seconds; defaults to server time if omitted) and uses it as `started_ts`.
+      properties:
+        ts:               { type: integer, description: unix epoch seconds }
+        email:            { type: string, format: email }
+        repo:             { type: string }
+        branch:           { type: string }
+        commit_sha:       { type: string }
+        platform:         { type: string, example: linux-x64 }
+        ncpu:             { type: integer }
+        build_type:       { type: string, example: Debug }
+        target:           { type: string }
+        args:             { type: string }
+        dir:              { type: string, description: alias of `output_dir` }
+        output_dir:       { type: string }
+        reclient_enabled: { type: boolean }
+        # rbe/ccache rarely useful at start time but accepted
+        rbe:    { $ref: "#/components/schemas/RbeStats" }
+        ccache: { $ref: "#/components/schemas/CcacheStats" }
+
+    StartResponse:
+      type: object
+      required: [id]
+      properties:
+        id: { type: integer, example: 42 }
+
+    IngestRequest:
+      allOf:
+        - $ref: "#/components/schemas/StartRequest"
+        - type: object
+          properties:
+            build_id:         { type: integer, description: pair with /api/start row }
+            start:            { type: string, description: ISO timestamp at script entry }
+            end:              { type: string, description: ISO timestamp at script exit }
+            total_time:       { type: integer, description: whole-script seconds }
+            ninja_total_time: { type: integer, description: ninja phase seconds }
+            ninja_time:       { type: integer, description: alias of `ninja_total_time` }
+            exit_code:        { type: integer }
+            # convenience flat aliases
+            rbe_hits:           { type: integer }
+            rbe_misses:         { type: integer }
+            rbe_local_fallback: { type: integer }
+            rbe_total_actions:  { type: integer }
+            ccache_direct_hit:  { type: integer }
+            ccache_preproc_hit: { type: integer }
+            ccache_miss:        { type: integer }
+            ccache_size_kib:    { type: integer }
+
+    IngestResponse:
+      type: object
+      required: [id, updated]
+      properties:
+        id:      { type: integer, example: 42 }
+        updated: { type: boolean, example: true, description: true=UPDATE, false=INSERT }
+
+    BuildRow:
+      type: object
+      properties:
+        id:                 { type: integer }
+        ts:                 { type: integer, description: unix epoch seconds }
+        started_ts:         { type: integer, nullable: true }
+        finished_ts:        { type: integer, nullable: true }
+        status:             { type: string, enum: [running, finished], nullable: true }
+        user_email:         { type: string, nullable: true }
+        platform:           { type: string, nullable: true }
+        build_type:         { type: string, nullable: true }
+        target:             { type: string, nullable: true }
+        total_time:         { type: integer, nullable: true }
+        ninja_time:         { type: integer, nullable: true }
+        exit_code:          { type: integer, nullable: true }
+        reclient_enabled:   { type: integer, nullable: true, enum: [0, 1] }
+        rbe_hits:           { type: integer, nullable: true }
+        rbe_misses:         { type: integer, nullable: true }
+        ccache_direct_hit:  { type: integer, nullable: true }
+        ccache_miss:        { type: integer, nullable: true }
+
+    BuildDetail:
+      allOf:
+        - $ref: "#/components/schemas/BuildRow"
+        - type: object
+          properties:
+            repo:               { type: string, nullable: true }
+            branch:             { type: string, nullable: true }
+            commit_sha:         { type: string, nullable: true }
+            ncpu:               { type: integer, nullable: true }
+            args:               { type: string, nullable: true }
+            output_dir:         { type: string, nullable: true }
+            start_ts:           { type: string, nullable: true, description: ISO display string from build.sh }
+            end_ts:             { type: string, nullable: true }
+            rbe_local_fallback: { type: integer, nullable: true }
+            rbe_total_actions:  { type: integer, nullable: true }
+            ccache_preproc_hit: { type: integer, nullable: true }
+            ccache_size_kib:    { type: integer, nullable: true }
+            raw:
+              type: object
+              description: original JSON payload as received
+              additionalProperties: true
+
+    BuildList:
+      type: object
+      required: [total, items]
+      properties:
+        total: { type: integer, description: total matching rows (pre-pagination) }
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/BuildRow" }
+
+    Summary:
+      type: object
+      required: [days, total, success, fail, running, success_rate, avg_total_time, avg_ninja_time, rbe_hit_rate, ccache_hit_rate]
+      properties:
+        days:            { type: integer }
+        total:           { type: integer }
+        success:         { type: integer, description: rows with exit_code=0 }
+        fail:            { type: integer, description: total - success - running }
+        running:         { type: integer, description: rows with status=running (any time) }
+        success_rate:    { type: number, format: float, description: percent }
+        avg_total_time:  { type: number, format: float, description: seconds }
+        avg_ninja_time:  { type: number, format: float, description: seconds }
+        rbe_hit_rate:    { type: number, format: float, description: percent }
+        ccache_hit_rate: { type: number, format: float, description: percent }
+
+    TsPoint:
+      type: object
+      properties:
+        day:       { type: string, example: "2026-05-08", description: local date }
+        total:     { type: integer }
+        success:   { type: integer }
+        avg_total: { type: number, format: float }
+
+    UserStat:
+      type: object
+      properties:
+        user:      { type: string }
+        total:     { type: integer }
+        success:   { type: integer }
+        avg_total: { type: number, format: float }
+
+    PlatStat:
+      type: object
+      properties:
+        platform: { type: string }
+        total:    { type: integer }
+
+    Distinct:
+      type: object
+      required: [users, platforms]
+      properties:
+        users:     { type: array, items: { type: string } }
+        platforms: { type: array, items: { type: string } }

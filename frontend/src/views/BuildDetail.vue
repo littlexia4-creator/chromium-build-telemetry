@@ -69,6 +69,7 @@ function fmtTs(ts: unknown) {
             <el-descriptions-item label="preproc hit">{{ data.ccache_preproc_hit ?? '-' }}</el-descriptions-item>
             <el-descriptions-item label="miss">{{ data.ccache_miss ?? '-' }}</el-descriptions-item>
             <el-descriptions-item label="size (KiB)">{{ data.ccache_size_kib ?? '-' }}</el-descriptions-item>
+            <el-descriptions-item label="CCACHE_MAXSIZE">{{ data.ccache_maxsize ?? '-' }}</el-descriptions-item>
           </el-descriptions>
         </el-card>
       </el-col>

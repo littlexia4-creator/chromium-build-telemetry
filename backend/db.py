@@ -8,9 +8,15 @@ SCHEMA_PATH = Path(__file__).parent / "schema.sql"
 
 # (column_name, type/default) — applied if missing on existing DBs.
 MIGRATIONS = [
-    ("started_ts",  "INTEGER"),
-    ("finished_ts", "INTEGER"),
-    ("status",      "TEXT DEFAULT 'finished'"),
+    ("started_ts",     "INTEGER"),
+    ("finished_ts",    "INTEGER"),
+    ("status",         "TEXT DEFAULT 'finished'"),
+    ("ccache_maxsize", "TEXT"),
+]
+
+# (old_col, new_col) — applied if old exists and new does not.
+RENAMES = [
+    ("ccache_max_size", "ccache_maxsize"),
 ]
 
 # Indexes to create AFTER migrations (depend on possibly-new columns).
@@ -30,6 +36,17 @@ def init_db() -> None:
         conn.executescript(SCHEMA_PATH.read_text())
 
         cols = _existing_columns(conn)
+
+        # 1. Renames (must run before ADD COLUMN so we don't end up with both
+        #    old and new columns when an old DB already has the old name).
+        for old, new in RENAMES:
+            if old in cols and new not in cols:
+                conn.execute(
+                    f"ALTER TABLE builds RENAME COLUMN {old} TO {new}"
+                )
+                cols = _existing_columns(conn)
+
+        # 2. Add missing columns.
         for name, decl in MIGRATIONS:
             if name not in cols:
                 conn.execute(f"ALTER TABLE builds ADD COLUMN {name} {decl}")

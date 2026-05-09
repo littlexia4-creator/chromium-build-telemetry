@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS builds (
   ccache_preproc_hit  INTEGER,
   ccache_miss         INTEGER,
   ccache_size_kib     INTEGER,
+  ccache_maxsize      TEXT,
   raw_json            TEXT NOT NULL
 );
 

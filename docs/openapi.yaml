@@ -132,7 +132,12 @@ paths:
                   ninja_total_time: 1305
                   exit_code: 0
                   rbe: { hits: 12000, misses: 800, local_fallback: 12, total_actions: 12812 }
-                  ccache: { direct_hit: 8000, preproc_hit: 200, miss: 600, size_kib: 64000000 }
+                  ccache:
+                    direct_hit: 8000
+                    preproc_hit: 200
+                    miss: 600
+                    size_kib: 64000000
+                    CCACHE_MAXSIZE: "96GiB"
               insert:
                 summary: standalone (no /api/start)
                 value:
@@ -339,10 +344,26 @@ components:
     CcacheStats:
       type: object
       properties:
-        direct_hit:  { type: integer, nullable: true }
-        preproc_hit: { type: integer, nullable: true }
-        miss:        { type: integer, nullable: true }
-        size_kib:    { type: integer, nullable: true }
+        direct_hit:     { type: integer, nullable: true }
+        preproc_hit:    { type: integer, nullable: true }
+        miss:           { type: integer, nullable: true }
+        size_kib:       { type: integer, nullable: true, description: current cache size, KiB }
+        CCACHE_MAXSIZE:
+          type: string
+          nullable: true
+          description: |
+            Configured ccache max size, exact value of `CCACHE_MAXSIZE` env var
+            (e.g. `96GiB`, `100G`, `5000000K`). Stored as text so unit suffix
+            is preserved.
+          example: "96GiB"
+        maxsize:
+          type: string
+          nullable: true
+          description: alias of `CCACHE_MAXSIZE`
+        max_size:
+          type: string
+          nullable: true
+          description: legacy alias of `CCACHE_MAXSIZE` (back-compat)
 
     StartRequest:
       type: object
@@ -395,6 +416,8 @@ components:
             ccache_preproc_hit: { type: integer }
             ccache_miss:        { type: integer }
             ccache_size_kib:    { type: integer }
+            ccache_maxsize:     { type: string, description: flat alias of `ccache.CCACHE_MAXSIZE` }
+            ccache_max_size:    { type: string, description: legacy alias (back-compat); prefer `ccache_maxsize` }
 
     IngestResponse:
       type: object
@@ -441,6 +464,7 @@ components:
             rbe_total_actions:  { type: integer, nullable: true }
             ccache_preproc_hit: { type: integer, nullable: true }
             ccache_size_kib:    { type: integer, nullable: true }
+            ccache_maxsize:     { type: string,  nullable: true, description: configured CCACHE_MAXSIZE (e.g. "96GiB") }
             raw:
               type: object
               description: original JSON payload as received

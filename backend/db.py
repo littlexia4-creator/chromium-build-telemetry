@@ -8,10 +8,13 @@ SCHEMA_PATH = Path(__file__).parent / "schema.sql"
 
 # (column_name, type/default) — applied if missing on existing DBs.
 MIGRATIONS = [
-    ("started_ts",     "INTEGER"),
-    ("finished_ts",    "INTEGER"),
-    ("status",         "TEXT DEFAULT 'finished'"),
-    ("ccache_maxsize", "TEXT"),
+    ("started_ts",       "INTEGER"),
+    ("finished_ts",      "INTEGER"),
+    ("status",           "TEXT DEFAULT 'finished'"),
+    ("ccache_maxsize",   "TEXT"),
+    ("chromium_src_dir", "TEXT"),
+    ("os",               "TEXT"),
+    ("arch",             "TEXT"),
 ]
 
 # (old_col, new_col) — applied if old exists and new does not.

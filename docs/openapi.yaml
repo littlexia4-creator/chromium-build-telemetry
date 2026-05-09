@@ -70,26 +70,22 @@ paths:
             schema:
               $ref: "#/components/schemas/StartRequest"
             examples:
-              minimal:
-                summary: minimal kickoff
-                value:
-                  ts: 1730983200
-                  email: user@example.com
-                  reclient_enabled: true
-              rich:
-                summary: rich kickoff
+              kickoff:
+                summary: build kickoff (platform auto-derived from os+arch)
                 value:
                   ts: 1730983200
                   email: user@example.com
                   repo: ssh://gerrit/.../desktop
                   branch: main_144
                   commit_sha: abc1234
-                  platform: linux-x64
+                  os: linux
+                  arch: x86_64
                   ncpu: 64
                   build_type: Debug
                   target: chrome
                   args: "-d --reclient"
-                  dir: out/Debug
+                  chromium_src_dir: /home/user/chromium/src
+                  OUTPUT_DIR: out/Debug
                   reclient_enabled: true
       responses:
         "200":
@@ -123,32 +119,46 @@ paths:
             schema:
               $ref: "#/components/schemas/IngestRequest"
             examples:
-              update:
-                summary: paired with /api/start
+              finish:
+                summary: pair with /api/start via build_id (recommended path)
+                description: |
+                  Server applies UPDATE on row #42. Identity fields set by
+                  /api/start (email, branch, chromium_src_dir, OUTPUT_DIR,
+                  reclient_enabled, ncpu, ...) are PRESERVED — only the keys
+                  present below are overwritten. Repeating `os`/`arch` here
+                  is harmless (idempotent overwrite) and heals the row if
+                  /api/start was truncated.
+
+                  Field notes:
+                  * `total_time` ≥ `ninja_total_time`. Delta = gn gen +
+                    reproxy bootstrap + setup overhead.
+                  * `exit_code = 0` success; `>=130` is signal-killed
+                    (e.g. 130 = SIGINT / Ctrl-C, 137 = SIGKILL).
+                  * `rbe.total_actions = hits + misses + local_fallback`
+                    in well-behaved builds.
+                  * `ccache.size_kib` is current on-disk usage; it should
+                    be < `CCACHE_MAXSIZE` or eviction will kick in.
                 value:
                   build_id: 42
-                  ts: 1730984591
-                  total_time: 1391
-                  ninja_total_time: 1305
+                  ts: 1730984591                    # unix epoch at build.sh exit
+                  os: linux                         # idempotent — heals row if /api/start truncated
+                  arch: x86_64
+                  start: "2026/05/09 10:00:00"      # ISO display from build.sh
+                  end:   "2026/05/09 10:23:11"
+                  total_time: 1391                  # 23m11s — whole script
+                  ninja_total_time: 1305            # 21m45s — ninja phase only
                   exit_code: 0
-                  rbe: { hits: 12000, misses: 800, local_fallback: 12, total_actions: 12812 }
+                  rbe:
+                    hits: 12000
+                    misses: 800
+                    local_fallback: 12
+                    total_actions: 12812
                   ccache:
-                    direct_hit: 8000
-                    preproc_hit: 200
-                    miss: 600
-                    size_kib: 64000000
+                    direct_hit: 8200
+                    preproc_hit: 250
+                    miss: 612
+                    size_kib: 50331648              # ~48 GiB cache used
                     CCACHE_MAXSIZE: "96GiB"
-              insert:
-                summary: standalone (no /api/start)
-                value:
-                  ts: 1730984591
-                  email: user@example.com
-                  branch: main_144
-                  platform: linux-x64
-                  total_time: 1391
-                  ninja_total_time: 1305
-                  exit_code: 0
-                  reclient_enabled: true
       responses:
         "200":
           description: row inserted or updated
@@ -377,13 +387,19 @@ components:
         repo:             { type: string }
         branch:           { type: string }
         commit_sha:       { type: string }
-        platform:         { type: string, example: linux-x64 }
+        platform:         { type: string, example: linux-x86_64, description: "free-form host label. If omitted but `os` + `arch` are provided, server auto-derives `${os}-${arch}`. Prefer sending only `os` + `arch` from new clients." }
+        os:               { type: string, example: linux,    description: "host operating system kernel name (linux/darwin/mingw)" }
+        arch:             { type: string, example: x86_64,   description: "host CPU architecture (x86_64/arm64/...)" }
         ncpu:             { type: integer }
         build_type:       { type: string, example: Debug }
         target:           { type: string }
         args:             { type: string }
-        dir:              { type: string, description: alias of `output_dir` }
-        output_dir:       { type: string }
+        OUTPUT_DIR:       { type: string, example: out/Debug, description: "build output directory relative to `chromium_src_dir`" }
+        output_dir:       { type: string, description: alias of `OUTPUT_DIR` (lowercase) }
+        out_dir:          { type: string, description: alias of `OUTPUT_DIR` }
+        chromium_src_dir: { type: string, example: /home/user/chromium/src, description: "absolute path to chromium src tree on the builder" }
+        src_dir:          { type: string, description: alias of `chromium_src_dir` }
+        dir:              { type: string, description: legacy alias of `chromium_src_dir` (back-compat with old build.sh) }
         reclient_enabled: { type: boolean }
         # rbe/ccache rarely useful at start time but accepted
         rbe:    { $ref: "#/components/schemas/RbeStats" }
@@ -455,9 +471,12 @@ components:
             repo:               { type: string, nullable: true }
             branch:             { type: string, nullable: true }
             commit_sha:         { type: string, nullable: true }
+            os:                 { type: string, nullable: true }
+            arch:               { type: string, nullable: true }
             ncpu:               { type: integer, nullable: true }
             args:               { type: string, nullable: true }
-            output_dir:         { type: string, nullable: true }
+            output_dir:         { type: string, nullable: true, description: "OUTPUT_DIR (e.g. `out/Debug`)" }
+            chromium_src_dir:   { type: string, nullable: true, description: "absolute path to chromium src tree" }
             start_ts:           { type: string, nullable: true, description: ISO display string from build.sh }
             end_ts:             { type: string, nullable: true }
             rbe_local_fallback: { type: integer, nullable: true }

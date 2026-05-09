@@ -39,18 +39,35 @@ def extract_fields(payload: dict) -> dict:
     rbe = payload.get("rbe", {}) if isinstance(payload.get("rbe"), dict) else {}
     cc = payload.get("ccache", {}) if isinstance(payload.get("ccache"), dict) else {}
 
+    os_val   = _to_str(payload.get("os"))
+    arch_val = _to_str(payload.get("arch"))
+    platform_val = _to_str(payload.get("platform"))
+    if not platform_val and os_val and arch_val:
+        platform_val = f"{os_val}-{arch_val}"
+
     return {
         "ts": int(payload.get("ts") or time.time()),
         "user_email":         _to_str(payload.get("email") or payload.get("user_email")),
         "repo":               _to_str(payload.get("repo")),
         "branch":             _to_str(payload.get("branch")),
         "commit_sha":         _to_str(payload.get("commit_sha") or payload.get("commit")),
-        "platform":           _to_str(payload.get("platform")),
+        "platform":           platform_val,
         "ncpu":               _to_int(payload.get("ncpu")),
         "build_type":         _to_str(payload.get("build_type")),
         "target":             _to_str(payload.get("target") or payload.get("targets")),
         "args":               _to_str(payload.get("args")),
-        "output_dir":         _to_str(payload.get("dir") or payload.get("output_dir")),
+        "output_dir":         _to_str(
+            payload.get("OUTPUT_DIR")
+            or payload.get("output_dir")
+            or payload.get("out_dir")
+        ),
+        "chromium_src_dir":   _to_str(
+            payload.get("chromium_src_dir")
+            or payload.get("src_dir")
+            or payload.get("dir")          # legacy build.sh alias
+        ),
+        "os":                 os_val,
+        "arch":               arch_val,
         "start_ts":           _to_str(payload.get("start")),
         "end_ts":             _to_str(payload.get("end")),
         "total_time":         _to_int(payload.get("total_time")),
@@ -77,7 +94,9 @@ def extract_fields(payload: dict) -> dict:
 
 COLUMNS = [
     "ts", "user_email", "repo", "branch", "commit_sha",
-    "platform", "ncpu", "build_type", "target", "args", "output_dir",
+    "platform", "os", "arch", "ncpu",
+    "build_type", "target", "args",
+    "output_dir", "chromium_src_dir",
     "start_ts", "end_ts", "total_time", "ninja_time", "exit_code",
     "reclient_enabled",
     "rbe_hits", "rbe_misses", "rbe_local_fallback", "rbe_total_actions",

@@ -41,6 +41,8 @@ function fmtTs(ts: unknown) {
       <el-descriptions-item label="Finished">{{ fmtTs(data.finished_ts) }}</el-descriptions-item>
       <el-descriptions-item label="User">{{ data.user_email ?? '-' }}</el-descriptions-item>
       <el-descriptions-item label="Platform">{{ data.platform ?? '-' }}</el-descriptions-item>
+      <el-descriptions-item label="OS">{{ data.os ?? '-' }}</el-descriptions-item>
+      <el-descriptions-item label="Arch">{{ data.arch ?? '-' }}</el-descriptions-item>
       <el-descriptions-item label="Build type">{{ data.build_type ?? '-' }}</el-descriptions-item>
       <el-descriptions-item label="Reclient">{{ data.reclient_enabled ? 'on' : 'off' }}</el-descriptions-item>
       <el-descriptions-item label="Target" :span="3">{{ data.target ?? '-' }}</el-descriptions-item>
@@ -48,7 +50,8 @@ function fmtTs(ts: unknown) {
       <el-descriptions-item label="Ninja time (s)">{{ data.ninja_time ?? '-' }}</el-descriptions-item>
       <el-descriptions-item label="ncpu">{{ data.ncpu ?? '-' }}</el-descriptions-item>
       <el-descriptions-item label="Args" :span="3">{{ data.args ?? '-' }}</el-descriptions-item>
-      <el-descriptions-item label="Output dir" :span="3">{{ data.output_dir ?? '-' }}</el-descriptions-item>
+      <el-descriptions-item label="OUTPUT_DIR" :span="3">{{ data.output_dir ?? '-' }}</el-descriptions-item>
+      <el-descriptions-item label="chromium_src_dir" :span="3">{{ data.chromium_src_dir ?? '-' }}</el-descriptions-item>
     </el-descriptions>
 
     <el-row :gutter="12" class="mt">

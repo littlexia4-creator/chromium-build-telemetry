@@ -34,6 +34,15 @@ def _bool_to_int(v: Any) -> int | None:
     return None
 
 
+def _first_non_none(*vals):
+    """Return first value that is not None. Unlike , this preserves
+    falsy-but-meaningful values like 0 and False."""
+    for v in vals:
+        if v is not None:
+            return v
+    return None
+
+
 def extract_fields(payload: dict) -> dict:
     """Map ingest payload -> column dict. Tolerant of missing keys."""
     rbe = payload.get("rbe", {}) if isinstance(payload.get("rbe"), dict) else {}
@@ -71,17 +80,17 @@ def extract_fields(payload: dict) -> dict:
         "start_ts":           _to_str(payload.get("start")),
         "end_ts":             _to_str(payload.get("end")),
         "total_time":         _to_int(payload.get("total_time")),
-        "ninja_time":         _to_int(payload.get("ninja_total_time") or payload.get("ninja_time")),
+        "ninja_time":         _to_int(_first_non_none(payload.get("ninja_total_time"), payload.get("ninja_time"))),
         "exit_code":          _to_int(payload.get("exit_code")),
         "reclient_enabled":   _bool_to_int(payload.get("reclient_enabled")),
-        "rbe_hits":           _to_int(rbe.get("hits") or payload.get("rbe_hits")),
-        "rbe_misses":         _to_int(rbe.get("misses") or payload.get("rbe_misses")),
-        "rbe_local_fallback": _to_int(rbe.get("local_fallback") or payload.get("rbe_local_fallback")),
-        "rbe_total_actions":  _to_int(rbe.get("total_actions") or payload.get("rbe_total_actions")),
-        "ccache_direct_hit":  _to_int(cc.get("direct_hit") or payload.get("ccache_direct_hit")),
-        "ccache_preproc_hit": _to_int(cc.get("preproc_hit") or payload.get("ccache_preproc_hit")),
-        "ccache_miss":        _to_int(cc.get("miss") or payload.get("ccache_miss")),
-        "ccache_size_kib":    _to_int(cc.get("size_kib") or payload.get("ccache_size_kib")),
+        "rbe_hits":           _to_int(_first_non_none(rbe.get("hits"), payload.get("rbe_hits"))),
+        "rbe_misses":         _to_int(_first_non_none(rbe.get("misses"), payload.get("rbe_misses"))),
+        "rbe_local_fallback": _to_int(_first_non_none(rbe.get("local_fallback"), payload.get("rbe_local_fallback"))),
+        "rbe_total_actions":  _to_int(_first_non_none(rbe.get("total_actions"), payload.get("rbe_total_actions"))),
+        "ccache_direct_hit":  _to_int(_first_non_none(cc.get("direct_hit"), payload.get("ccache_direct_hit"))),
+        "ccache_preproc_hit": _to_int(_first_non_none(cc.get("preproc_hit"), payload.get("ccache_preproc_hit"))),
+        "ccache_miss":        _to_int(_first_non_none(cc.get("miss"), payload.get("ccache_miss"))),
+        "ccache_size_kib":    _to_int(_first_non_none(cc.get("size_kib"), payload.get("ccache_size_kib"))),
         "ccache_maxsize":     _to_str(
             cc.get("CCACHE_MAXSIZE")
             or cc.get("maxsize")

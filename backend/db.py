@@ -17,12 +17,13 @@ MIGRATIONS = [
     ("arch",             "TEXT"),
     ("browser_type",     "TEXT"),
     ("rbe_remote_executions", "INTEGER"),
-    ("rbe_local_executions",  "INTEGER"),
+    ("rbe_local_failures",  "INTEGER"),
 ]
 
 # (old_col, new_col) — applied if old exists and new does not.
 RENAMES = [
     ("ccache_max_size", "ccache_maxsize"),
+    ("rbe_local_executions", "rbe_local_failures"),
 ]
 
 # Indexes to create AFTER migrations (depend on possibly-new columns).

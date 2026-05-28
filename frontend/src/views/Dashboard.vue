@@ -213,8 +213,8 @@ function statusType(s: string | null) {
       <el-table-column label="LocalFB" width="90">
         <template #default="{ row }: { row: BuildRow }">{{ row.rbe_local_fallback ?? "-" }}</template>
       </el-table-column>
-      <el-table-column label="LocalEx" width="90">
-        <template #default="{ row }: { row: BuildRow }">{{ row.rbe_local_executions ?? "-" }}</template>
+      <el-table-column label="LocalFail" width="90">
+        <template #default="{ row }: { row: BuildRow }">{{ row.rbe_local_failures ?? "-" }}</template>
       </el-table-column>
       <el-table-column label="ccache" width="120">
         <template #default="{ row }: { row: BuildRow }">

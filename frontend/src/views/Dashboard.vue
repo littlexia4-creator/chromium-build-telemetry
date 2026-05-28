@@ -6,7 +6,7 @@ import StatCard from '../components/StatCard.vue'
 import { api, type BuildRow, type Summary, type TsPoint, type UserStat, type PlatStat } from '../api'
 
 const router = useRouter()
-const rangeDays = ref(7)
+const rangeDays = ref(30)
 const summary = ref<Summary | null>(null)
 const series = ref<TsPoint[]>([])
 const userStats = ref<UserStat[]>([])

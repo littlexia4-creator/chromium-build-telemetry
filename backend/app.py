@@ -84,6 +84,11 @@ async def ingest(request: Request) -> dict:
         fields["status"] = "cancelled"
     else:
         fields["status"] = "finished"
+    # Cancelled builds have no meaningful exit_code (signal codes leak as
+    # 1 via `|| exit 1` in build.sh, real code lost). Null it out so the
+    # column never shows a misleading value for cancelled rows.
+    if fields["status"] == "cancelled":
+        fields["exit_code"] = None
     fields["raw_json"]    = raw.decode("utf-8", errors="replace")
 
     bid = payload.get("build_id")

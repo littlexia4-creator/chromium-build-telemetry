@@ -214,7 +214,7 @@ function statusType(s: string | null) {
         <template #default="{ row }: { row: BuildRow }">{{ row.rbe_local_fallback ?? "-" }}</template>
       </el-table-column>
       <el-table-column label="LocalFail" width="90">
-        <template #default="{ row }: { row: BuildRow }">{{ row.rbe_local_failures ?? "-" }}</template>
+        <template #default="{ row }: { row: BuildRow }">{{ row.rbe_local_failures ?? 0 }}</template>
       </el-table-column>
       <el-table-column label="ccache" width="120">
         <template #default="{ row }: { row: BuildRow }">

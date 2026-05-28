@@ -184,8 +184,6 @@ function statusType(s: string | null) {
         </template>
       </el-table-column>
       <el-table-column prop="user_email" label="User" width="200" show-overflow-tooltip />
-      <el-table-column prop="browser_type" label="Browser" width="100" />
-      <el-table-column prop="target" label="Target" min-width="160" show-overflow-tooltip />
       <el-table-column label="Exit" width="70">
         <template #default="{ row }: { row: BuildRow }">
           <el-tag v-if="row.exit_code !== null" size="small" :type="row.exit_code === 0 ? 'success' : 'danger'">
@@ -221,6 +219,8 @@ function statusType(s: string | null) {
       </el-table-column>
       <el-table-column prop="platform" label="Platform" width="120" />
       <el-table-column prop="build_type" label="Type" width="90" />
+      <el-table-column prop="browser_type" label="Browser" width="100" />
+      <el-table-column prop="target" label="Target" min-width="160" show-overflow-tooltip />
     </el-table>
 
     <el-pagination

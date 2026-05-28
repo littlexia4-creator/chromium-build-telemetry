@@ -15,6 +15,7 @@ export interface BuildRow {
   user_email: string | null
   platform: string | null
   build_type: string | null
+  browser_type: string | null
   target: string | null
   total_time: number | null
   ninja_time: number | null
@@ -22,6 +23,9 @@ export interface BuildRow {
   reclient_enabled: number | null
   rbe_hits: number | null
   rbe_misses: number | null
+  rbe_remote_executions: number | null
+  rbe_local_fallback: number | null
+  rbe_local_executions: number | null
   ccache_direct_hit: number | null
   ccache_miss: number | null
 }

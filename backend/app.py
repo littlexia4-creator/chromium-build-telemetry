@@ -155,9 +155,11 @@ def list_builds(
         ).fetchone()["c"]
         rows = conn.execute(
             f"""SELECT id, ts, started_ts, finished_ts, status,
-                       user_email, platform, build_type, target,
+                       user_email, platform, build_type, browser_type, target,
                        total_time, ninja_time, exit_code, reclient_enabled,
-                       rbe_hits, rbe_misses, ccache_direct_hit, ccache_miss
+                       rbe_hits, rbe_misses, rbe_remote_executions,
+                       rbe_local_fallback, rbe_local_executions,
+                       ccache_direct_hit, ccache_miss
                 FROM builds {sql_where}
                 ORDER BY ts DESC LIMIT ? OFFSET ?""",
             params + [limit, offset],

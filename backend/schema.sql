@@ -29,6 +29,9 @@ CREATE TABLE IF NOT EXISTS builds (
   ccache_miss         INTEGER,
   ccache_size_kib     INTEGER,
   ccache_maxsize      TEXT,
+  browser_type        TEXT,
+  rbe_remote_executions INTEGER,
+  rbe_local_executions  INTEGER,
   raw_json            TEXT NOT NULL
 );
 

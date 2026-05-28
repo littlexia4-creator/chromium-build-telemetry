@@ -15,6 +15,9 @@ MIGRATIONS = [
     ("chromium_src_dir", "TEXT"),
     ("os",               "TEXT"),
     ("arch",             "TEXT"),
+    ("browser_type",     "TEXT"),
+    ("rbe_remote_executions", "INTEGER"),
+    ("rbe_local_executions",  "INTEGER"),
 ]
 
 # (old_col, new_col) — applied if old exists and new does not.

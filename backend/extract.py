@@ -63,6 +63,8 @@ def extract_fields(payload: dict) -> dict:
         "platform":           platform_val,
         "ncpu":               _to_int(payload.get("ncpu")),
         "build_type":         _to_str(payload.get("build_type")),
+        "browser_type":       _to_str(payload.get("browser_type")
+                                      or payload.get("UC_BUILD_PRODUCT_TYPE")),
         "target":             _to_str(payload.get("target") or payload.get("targets")),
         "args":               _to_str(payload.get("args")),
         "output_dir":         _to_str(
@@ -86,6 +88,8 @@ def extract_fields(payload: dict) -> dict:
         "rbe_hits":           _to_int(_first_non_none(rbe.get("hits"), payload.get("rbe_hits"))),
         "rbe_misses":         _to_int(_first_non_none(rbe.get("misses"), payload.get("rbe_misses"))),
         "rbe_local_fallback": _to_int(_first_non_none(rbe.get("local_fallback"), payload.get("rbe_local_fallback"))),
+        "rbe_remote_executions": _to_int(_first_non_none(rbe.get("remote_executions"), payload.get("rbe_remote_executions"))),
+        "rbe_local_executions":  _to_int(_first_non_none(rbe.get("local_executions"), payload.get("rbe_local_executions"))),
         "rbe_total_actions":  _to_int(_first_non_none(rbe.get("total_actions"), payload.get("rbe_total_actions"))),
         "ccache_direct_hit":  _to_int(_first_non_none(cc.get("direct_hit"), payload.get("ccache_direct_hit"))),
         "ccache_preproc_hit": _to_int(_first_non_none(cc.get("preproc_hit"), payload.get("ccache_preproc_hit"))),
@@ -105,11 +109,12 @@ def extract_fields(payload: dict) -> dict:
 COLUMNS = [
     "ts", "user_email", "repo", "branch", "commit_sha",
     "platform", "os", "arch", "ncpu",
-    "build_type", "target", "args",
+    "build_type", "browser_type", "target", "args",
     "output_dir", "chromium_src_dir",
     "start_ts", "end_ts", "total_time", "ninja_time", "exit_code",
     "reclient_enabled",
     "rbe_hits", "rbe_misses", "rbe_local_fallback", "rbe_total_actions",
+    "rbe_remote_executions", "rbe_local_executions",
     "ccache_direct_hit", "ccache_preproc_hit", "ccache_miss", "ccache_size_kib",
     "ccache_maxsize",
 ]

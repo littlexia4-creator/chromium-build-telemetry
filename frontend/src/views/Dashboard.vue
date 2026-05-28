@@ -184,16 +184,7 @@ function statusType(s: string | null) {
         </template>
       </el-table-column>
       <el-table-column prop="user_email" label="User" width="200" show-overflow-tooltip />
-      <el-table-column prop="platform" label="Platform" width="120" />
-      <el-table-column prop="build_type" label="Type" width="90" />
-      <el-table-column prop="browser_type" label="Browser" width="100" />
       <el-table-column prop="target" label="Target" min-width="160" show-overflow-tooltip />
-      <el-table-column label="Total" width="90">
-        <template #default="{ row }: { row: BuildRow }">{{ fmtSec(row.total_time) }}</template>
-      </el-table-column>
-      <el-table-column label="Ninja" width="90">
-        <template #default="{ row }: { row: BuildRow }">{{ fmtSec(row.ninja_time) }}</template>
-      </el-table-column>
       <el-table-column label="Exit" width="70">
         <template #default="{ row }: { row: BuildRow }">
           <el-tag v-if="row.exit_code !== null" size="small" :type="row.exit_code === 0 ? 'success' : 'danger'">
@@ -202,13 +193,11 @@ function statusType(s: string | null) {
           <span v-else>-</span>
         </template>
       </el-table-column>
-      <el-table-column label="RBE" width="100">
-        <template #default="{ row }: { row: BuildRow }">
-          {{ (row.rbe_hits ?? 0) + '/' + ((row.rbe_hits ?? 0) + (row.rbe_misses ?? 0)) }}
-        </template>
+      <el-table-column label="Total" width="90">
+        <template #default="{ row }: { row: BuildRow }">{{ fmtSec(row.total_time) }}</template>
       </el-table-column>
-      <el-table-column label="Remote" width="90">
-        <template #default="{ row }: { row: BuildRow }">{{ row.rbe_remote_executions ?? "-" }}</template>
+      <el-table-column label="Ninja" width="90">
+        <template #default="{ row }: { row: BuildRow }">{{ fmtSec(row.ninja_time) }}</template>
       </el-table-column>
       <el-table-column label="LocalFB" width="90">
         <template #default="{ row }: { row: BuildRow }">{{ row.rbe_local_fallback ?? "-" }}</template>
@@ -216,11 +205,22 @@ function statusType(s: string | null) {
       <el-table-column label="LocalFail" width="90">
         <template #default="{ row }: { row: BuildRow }">{{ row.rbe_local_failures ?? 0 }}</template>
       </el-table-column>
+      <el-table-column label="Remote" width="90">
+        <template #default="{ row }: { row: BuildRow }">{{ row.rbe_remote_executions ?? "-" }}</template>
+      </el-table-column>
+      <el-table-column label="RBE" width="100">
+        <template #default="{ row }: { row: BuildRow }">
+          {{ (row.rbe_hits ?? 0) + '/' + ((row.rbe_hits ?? 0) + (row.rbe_misses ?? 0)) }}
+        </template>
+      </el-table-column>
       <el-table-column label="ccache" width="120">
         <template #default="{ row }: { row: BuildRow }">
           {{ (row.ccache_direct_hit ?? 0) + ' / ' + (row.ccache_miss ?? 0) }}
         </template>
       </el-table-column>
+      <el-table-column prop="platform" label="Platform" width="120" />
+      <el-table-column prop="build_type" label="Type" width="90" />
+      <el-table-column prop="browser_type" label="Browser" width="100" />
     </el-table>
 
     <el-pagination

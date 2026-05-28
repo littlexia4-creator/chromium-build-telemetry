@@ -183,7 +183,7 @@ def get_build(build_id: int) -> dict:
 
 
 @app.get("/api/stats/summary")
-def stats_summary(days: int = 7) -> dict:
+def stats_summary(days: int = 30) -> dict:
     return stats.summary(days)
 
 

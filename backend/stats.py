@@ -5,7 +5,7 @@ import time
 from .db import get_conn
 
 
-def summary(days: int = 7) -> dict:
+def summary(days: int = 30) -> dict:
     since = int(time.time()) - days * 86400
     with get_conn() as conn:
         row = conn.execute("""

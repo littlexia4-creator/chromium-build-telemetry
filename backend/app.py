@@ -76,7 +76,14 @@ async def ingest(request: Request) -> dict:
 
     fields = extract_fields(payload)
     fields["finished_ts"] = int(time.time())
-    fields["status"]      = "finished"
+    _client_status = fields.get("status")
+    _ec = fields.get("exit_code")
+    if _client_status:
+        fields["status"] = _client_status
+    elif _ec in (130, 143):
+        fields["status"] = "cancelled"
+    else:
+        fields["status"] = "finished"
     fields["raw_json"]    = raw.decode("utf-8", errors="replace")
 
     bid = payload.get("build_id")

@@ -139,7 +139,7 @@ function statusType(s: string | null) {
 
   <el-row :gutter="12" class="charts">
     <el-col :span="14">
-      <el-card><div class="chart-title">Builds per day</div><VChart :option="tsOption" autoresize style="height:300px" /></el-card>
+      <el-card><div class="chart-title">All Builds per day</div><VChart :option="tsOption" autoresize style="height:300px" /></el-card>
     </el-col>
     <el-col :span="10">
       <el-card><div class="chart-title">Platform mix</div><VChart :option="platOption" autoresize style="height:300px" /></el-card>

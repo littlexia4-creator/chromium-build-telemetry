@@ -54,7 +54,8 @@ export interface PlatStat { platform: string; total: number }
 
 export const api = {
   summary:    (days = 30)  => http<Summary>(`/api/stats/summary?days=${days}`),
-  timeseries: (days = 14) => http<TsPoint[]>(`/api/stats/timeseries?days=${days}`),
+  timeseries: (days = 14, kind?: "full" | "incremental") =>
+    http<TsPoint[]>(`/api/stats/timeseries?days=${days}` + (kind ? `&kind=${kind}` : "")),
   byUser:     (days = 14) => http<UserStat[]>(`/api/stats/by_user?days=${days}`),
   byPlatform: (days = 14) => http<PlatStat[]>(`/api/stats/by_platform?days=${days}`),
   distinct:   ()          => http<{ users: string[]; platforms: string[] }>(`/api/stats/distinct`),

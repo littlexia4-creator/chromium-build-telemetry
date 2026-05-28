@@ -190,8 +190,8 @@ def stats_summary(days: int = 30) -> dict:
 
 
 @app.get("/api/stats/timeseries")
-def stats_timeseries(days: int = 14) -> list[dict]:
-    return stats.timeseries(days)
+def stats_timeseries(days: int = 14, kind: str | None = None) -> list[dict]:
+    return stats.timeseries(days, kind=kind)
 
 
 @app.get("/api/stats/by_user")

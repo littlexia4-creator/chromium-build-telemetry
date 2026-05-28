@@ -47,17 +47,26 @@ def summary(days: int = 30) -> dict:
     }
 
 
-def timeseries(days: int = 14) -> list[dict]:
+FULL_BUILD_ACTIONS_THRESHOLD = 46000
+
+def timeseries(days: int = 14, kind: str | None = None) -> list[dict]:
     since = int(time.time()) - days * 86400
+    extra_where = ""
+    if kind == "full":
+        extra_where = f" AND rbe_total_actions > {FULL_BUILD_ACTIONS_THRESHOLD}"
+    elif kind == "incremental":
+        extra_where = (
+            f" AND (rbe_total_actions IS NULL OR rbe_total_actions <= {FULL_BUILD_ACTIONS_THRESHOLD})"
+        )
     with get_conn() as conn:
-        rows = conn.execute("""
+        rows = conn.execute(f"""
             SELECT
               date(ts, 'unixepoch', 'localtime')              AS day,
               COUNT(*)                                        AS total,
               SUM(CASE WHEN exit_code = 0 AND COALESCE(status,'') != 'cancelled' THEN 1 ELSE 0 END) AS success,
               SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled,
               AVG(total_time)                                 AS avg_total
-            FROM builds WHERE ts >= ?
+            FROM builds WHERE ts >= ?{extra_where}
             GROUP BY day ORDER BY day
         """, (since,)).fetchall()
     return [dict(r) for r in rows]

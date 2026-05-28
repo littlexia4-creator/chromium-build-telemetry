@@ -9,6 +9,8 @@ const router = useRouter()
 const rangeDays = ref(30)
 const summary = ref<Summary | null>(null)
 const series = ref<TsPoint[]>([])
+const seriesFull = ref<TsPoint[]>([])
+const seriesInc = ref<TsPoint[]>([])
 const userStats = ref<UserStat[]>([])
 const platStats = ref<PlatStat[]>([])
 
@@ -74,6 +76,24 @@ const tsOption = computed(() => ({
     { name: 'Avg time (s)', type: 'line', yAxisIndex: 1, data: series.value.map(p => Math.round(p.avg_total || 0)), itemStyle: { color: '#e6a23c' } },
   ],
 }))
+
+function makeTsOption(rows: TsPoint[]) {
+  return {
+    tooltip: { trigger: 'axis' },
+    legend: { data: ['Total', 'Success', 'Avg time (s)'] },
+    grid: { left: 40, right: 40, top: 40, bottom: 30 },
+    xAxis: { type: 'category', data: rows.map(r => r.day) },
+    yAxis: [{ type: 'value', name: 'Builds' }, { type: 'value', name: 'Avg s' }],
+    series: [
+      { name: 'Total',   type: 'bar', data: rows.map(r => r.total) },
+      { name: 'Success', type: 'bar', data: rows.map(r => r.success) },
+      { name: 'Avg time (s)', type: 'line', yAxisIndex: 1, smooth: true,
+        data: rows.map(r => r.avg_total ? Math.round(r.avg_total) : 0) },
+    ],
+  }
+}
+const tsFullOption = computed(() => makeTsOption(seriesFull.value))
+const tsIncOption  = computed(() => makeTsOption(seriesInc.value))
 
 const userOption = computed(() => ({
   tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
@@ -143,6 +163,15 @@ function statusType(s: string | null) {
     </el-col>
     <el-col :span="10">
       <el-card><div class="chart-title">Platform mix</div><VChart :option="platOption" autoresize style="height:300px" /></el-card>
+    </el-col>
+  </el-row>
+
+  <el-row :gutter="12" class="charts">
+    <el-col :span="12">
+      <el-card><div class="chart-title">Incremental Build per day</div><VChart :option="tsIncOption" autoresize style="height:300px" /></el-card>
+    </el-col>
+    <el-col :span="12">
+      <el-card><div class="chart-title">Full Build per day</div><VChart :option="tsFullOption" autoresize style="height:300px" /></el-card>
     </el-col>
   </el-row>
 

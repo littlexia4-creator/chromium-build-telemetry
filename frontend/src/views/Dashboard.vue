@@ -24,6 +24,50 @@ const pageSize = ref(50)
 const total = ref(0)
 const items = ref<BuildRow[]>([])
 const loading = ref(false)
+const tableEl = ref<any>()
+const topScrollEl = ref<HTMLElement>()
+const tableInnerWidth = ref(0)
+let _bodyWrap: HTMLElement | null = null
+let _syncing = false
+
+function _findBodyWrap(): HTMLElement | null {
+  const root = tableEl.value?.$el as HTMLElement | undefined
+  if (!root) return null
+  return (root.querySelector('.el-scrollbar__wrap') ||
+          root.querySelector('.el-table__body-wrapper')) as HTMLElement | null
+}
+
+function _measure() {
+  if (!_bodyWrap) return
+  const inner = _bodyWrap.querySelector('table') as HTMLElement | null
+  tableInnerWidth.value = inner ? inner.scrollWidth : _bodyWrap.scrollWidth
+}
+
+function _onBodyScroll() {
+  if (_syncing || !_bodyWrap || !topScrollEl.value) return
+  _syncing = true
+  topScrollEl.value.scrollLeft = _bodyWrap.scrollLeft
+  _syncing = false
+}
+function _onTopScroll() {
+  if (_syncing || !_bodyWrap || !topScrollEl.value) return
+  _syncing = true
+  _bodyWrap.scrollLeft = topScrollEl.value.scrollLeft
+  _syncing = false
+}
+
+function setupTopScroll() {
+  _bodyWrap = _findBodyWrap()
+  if (!_bodyWrap) { setTimeout(setupTopScroll, 100); return }
+  _measure()
+  _bodyWrap.addEventListener('scroll', _onBodyScroll, { passive: true })
+  topScrollEl.value?.addEventListener('scroll', _onTopScroll, { passive: true })
+  const inner = _bodyWrap.querySelector('table') as HTMLElement | null
+  if (inner && 'ResizeObserver' in window) {
+    new ResizeObserver(_measure).observe(inner)
+  }
+  window.addEventListener('resize', _measure)
+}
 
 async function loadStats() {
   const d = rangeDays.value
@@ -54,6 +98,7 @@ async function loadBuilds() {
 }
 
 onMounted(async () => {
+  setupTopScroll()
   distinct.value = await api.distinct()
   await loadStats()
   await loadBuilds()
@@ -215,7 +260,10 @@ function statusType(s: string | null) {
       <el-button size="small" @click="loadBuilds">Refresh</el-button>
     </div>
 
-    <el-table :data="items" v-loading="loading" :row-class-name="rowClass"
+    <div class="top-scroll" ref="topScrollEl">
+      <div :style="{ width: tableInnerWidth + 'px', height: '1px' }"></div>
+    </div>
+    <el-table ref="tableEl" :data="items" v-loading="loading" :row-class-name="rowClass"
               @row-click="(row: BuildRow) => router.push(`/builds/${row.id}`)" stripe size="small">
       <el-table-column prop="id" label="ID" width="70" />
       <el-table-column label="Started" width="170">
@@ -287,5 +335,11 @@ function statusType(s: string | null) {
 .pager { margin-top: 12px; justify-content: flex-end; }
 :deep(.row-fail) { background-color: #fef0f0 !important; }
 :deep(.row-running) { background-color: #fdf6ec !important; }
+.top-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  height: 12px;
+  margin-bottom: 4px;
+}
 :deep(.el-table__row) { cursor: pointer; }
 </style>

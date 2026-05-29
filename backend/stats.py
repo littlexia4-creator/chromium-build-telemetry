@@ -26,9 +26,19 @@ def summary(days: int = 30) -> dict:
                        THEN 1 ELSE 0 END)                       AS full_success,
               SUM(COALESCE(rbe_hits, 0))                            AS rbe_hits,
               SUM(COALESCE(rbe_misses, 0))                          AS rbe_misses,
+              SUM(CASE WHEN rbe_total_actions > 46000
+                       THEN COALESCE(rbe_hits, 0) ELSE 0 END)       AS full_rbe_hits,
+              SUM(CASE WHEN rbe_total_actions > 46000
+                       THEN COALESCE(rbe_misses, 0) ELSE 0 END)     AS full_rbe_misses,
               SUM(COALESCE(ccache_direct_hit, 0)
                   + COALESCE(ccache_preproc_hit, 0))                AS cc_hits,
-              SUM(COALESCE(ccache_miss, 0))                         AS cc_miss
+              SUM(COALESCE(ccache_miss, 0))                         AS cc_miss,
+              SUM(CASE WHEN rbe_total_actions > 46000
+                       THEN COALESCE(ccache_direct_hit, 0)
+                          + COALESCE(ccache_preproc_hit, 0)
+                       ELSE 0 END)                                  AS full_cc_hits,
+              SUM(CASE WHEN rbe_total_actions > 46000
+                       THEN COALESCE(ccache_miss, 0) ELSE 0 END)    AS full_cc_miss
             FROM builds WHERE ts >= ?
         """, (since,)).fetchone()
     total = row["total"] or 0
@@ -57,6 +67,16 @@ def summary(days: int = 30) -> dict:
         ),
         "rbe_hit_rate":   round(rbe_hits / rbe_total * 100, 2) if rbe_total else 0.0,
         "ccache_hit_rate": round(cc_hits / cc_total * 100, 2) if cc_total else 0.0,
+        "full_rbe_hit_rate": (
+            round((row["full_rbe_hits"] or 0) /
+                  ((row["full_rbe_hits"] or 0) + (row["full_rbe_misses"] or 0)) * 100, 2)
+            if ((row["full_rbe_hits"] or 0) + (row["full_rbe_misses"] or 0)) > 0 else 0.0
+        ),
+        "full_ccache_hit_rate": (
+            round((row["full_cc_hits"] or 0) /
+                  ((row["full_cc_hits"] or 0) + (row["full_cc_miss"] or 0)) * 100, 2)
+            if ((row["full_cc_hits"] or 0) + (row["full_cc_miss"] or 0)) > 0 else 0.0
+        ),
     }
 
 

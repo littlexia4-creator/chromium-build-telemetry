@@ -49,7 +49,9 @@ export interface Summary {
   avg_full_build_time: number | null
   avg_ninja_time: number
   rbe_hit_rate: number
+  full_rbe_hit_rate: number
   ccache_hit_rate: number
+  full_ccache_hit_rate: number
 }
 
 export interface TsPoint { day: string; total: number; success: number; avg_total: number }

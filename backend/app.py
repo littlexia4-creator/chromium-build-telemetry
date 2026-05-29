@@ -155,7 +155,7 @@ def list_builds(
         ).fetchone()["c"]
         rows = conn.execute(
             f"""SELECT id, ts, started_ts, finished_ts, status,
-                       user_email, platform, build_type, browser_type, target,
+                       user_email, platform, build_type, browser_type, ninja_jobs, target,
                        total_time, ninja_time, exit_code, reclient_enabled,
                        rbe_hits, rbe_misses, rbe_remote_executions,
                        rbe_local_fallback, rbe_local_failures,

@@ -15,6 +15,7 @@ export interface BuildRow {
   user_email: string | null
   platform: string | null
   build_type: string | null
+  ninja_jobs: number | null
   browser_type: string | null
   target: string | null
   total_time: number | null

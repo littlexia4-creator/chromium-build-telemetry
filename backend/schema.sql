@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS builds (
   commit_sha          TEXT,
   platform            TEXT,
   ncpu                INTEGER,
+  ninja_jobs          INTEGER,
   build_type          TEXT,
   target              TEXT,
   args                TEXT,

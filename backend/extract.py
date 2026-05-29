@@ -62,6 +62,7 @@ def extract_fields(payload: dict) -> dict:
         "commit_sha":         _to_str(payload.get("commit_sha") or payload.get("commit")),
         "platform":           platform_val,
         "ncpu":               _to_int(payload.get("ncpu")),
+        "ninja_jobs":         _to_int(payload.get("ninja_jobs") or payload.get("NINJA_JOBS")),
         "build_type":         _to_str(payload.get("build_type")),
         "browser_type":       _to_str(payload.get("browser_type")
                                       or payload.get("UC_BUILD_PRODUCT_TYPE")),
@@ -108,7 +109,7 @@ def extract_fields(payload: dict) -> dict:
 
 COLUMNS = [
     "ts", "user_email", "repo", "branch", "commit_sha",
-    "platform", "os", "arch", "ncpu",
+    "platform", "os", "arch", "ncpu", "ninja_jobs",
     "build_type", "browser_type", "target", "args",
     "output_dir", "chromium_src_dir",
     "start_ts", "end_ts", "total_time", "ninja_time", "exit_code",

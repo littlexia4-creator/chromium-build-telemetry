@@ -11,7 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from .db import init_db, get_conn
+from .db import init_db, get_conn, sweep_orphan_running
 from .extract import COLUMNS, extract_fields
 from . import stats
 
@@ -30,6 +30,7 @@ app.add_middleware(
 @app.on_event("startup")
 def _startup() -> None:
     init_db()
+    sweep_orphan_running()
 
 
 @app.get("/api/health")
@@ -186,6 +187,7 @@ def get_build(build_id: int) -> dict:
 
 @app.get("/api/stats/summary")
 def stats_summary(days: int = 30) -> dict:
+    sweep_orphan_running()
     return stats.summary(days)
 
 

@@ -27,6 +27,7 @@ export interface BuildRow {
   rbe_local_fallback: number | null
   rbe_local_failures: number | null
   ccache_direct_hit: number | null
+  ccache_preproc_hit: number | null
   ccache_miss: number | null
 }
 

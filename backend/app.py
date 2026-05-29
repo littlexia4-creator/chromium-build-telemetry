@@ -159,7 +159,7 @@ def list_builds(
                        total_time, ninja_time, exit_code, reclient_enabled,
                        rbe_hits, rbe_misses, rbe_remote_executions,
                        rbe_local_fallback, rbe_local_failures,
-                       ccache_direct_hit, ccache_miss
+                       ccache_direct_hit, ccache_preproc_hit, ccache_miss
                 FROM builds {sql_where}
                 ORDER BY ts DESC LIMIT ? OFFSET ?""",
             params + [limit, offset],

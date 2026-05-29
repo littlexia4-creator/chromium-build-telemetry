@@ -43,6 +43,7 @@ export interface Summary {
   running: number
   success_rate: number
   avg_total_time: number
+  avg_full_build_time: number | null
   avg_ninja_time: number
   rbe_hit_rate: number
   ccache_hit_rate: number

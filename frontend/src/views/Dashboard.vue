@@ -123,11 +123,12 @@ function fmtTs(ts: number | null) {
 }
 function fmtSec(s: number | null) {
   if (s == null) return '-'
-  if (s < 60) return `${s}s`
-  const m = Math.floor(s / 60), sec = s % 60
+  const r3 = (x: number) => Number(x.toFixed(3))
+  if (s < 60) return `${r3(s)}s`
+  const m = Math.floor(s / 60), sec = r3(s - m * 60)
   if (m < 60) return `${m}m${sec}s`
   const h = Math.floor(m / 60)
-  return `${h}h${m % 60}m`
+  return `${h}h${m % 60}m${sec}s`
 }
 function rowClass({ row }: { row: BuildRow }) {
   if (row.status === 'running') return 'row-running'
@@ -157,7 +158,7 @@ function statusType(s: string | null) {
     <el-col :span="3"><StatCard label="Success rate" :value="(summary?.success_rate ?? 0) + '%'" tone="ok" /></el-col>
     <el-col :span="3"><StatCard label="Failures"     :value="summary?.fail ?? '-'" tone="fail" /></el-col>
     <el-col :span="3"><StatCard label="In-flight"    :value="summary?.running ?? '-'" tone="warn" /></el-col>
-    <el-col :span="4"><StatCard label="Avg total"    :value="fmtSec(summary?.avg_total_time ?? null)" /></el-col>
+    <el-col :span="4"><StatCard label="Avg Full Build" :value="fmtSec(summary?.avg_full_build_time ?? null)" /></el-col>
     <el-col :span="4"><StatCard label="RBE hit %"    :value="(summary?.rbe_hit_rate ?? 0) + '%'" tone="ok" /></el-col>
     <el-col :span="4"><StatCard label="ccache hit %" :value="(summary?.ccache_hit_rate ?? 0) + '%'" tone="ok" /></el-col>
   </el-row>

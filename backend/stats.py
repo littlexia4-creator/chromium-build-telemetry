@@ -16,6 +16,7 @@ def summary(days: int = 30) -> dict:
               SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled,
               AVG(total_time)                                       AS avg_total,
               AVG(ninja_time)                                       AS avg_ninja,
+              AVG(CASE WHEN rbe_total_actions > 46000 THEN total_time END) AS avg_full,
               SUM(COALESCE(rbe_hits, 0))                            AS rbe_hits,
               SUM(COALESCE(rbe_misses, 0))                          AS rbe_misses,
               SUM(COALESCE(ccache_direct_hit, 0)
@@ -40,8 +41,9 @@ def summary(days: int = 30) -> dict:
         "running": running,
         "success_rate": round(success / max(1, total - cancelled - running) * 100, 2)
                           if (total - cancelled - running) > 0 else 0.0,
-        "avg_total_time": round(row["avg_total"] or 0, 1),
-        "avg_ninja_time": round(row["avg_ninja"] or 0, 1),
+        "avg_total_time": round(row["avg_total"] or 0, 3),
+        "avg_ninja_time": round(row["avg_ninja"] or 0, 3),
+        "avg_full_build_time": round(row["avg_full"] or 0, 3) if row["avg_full"] is not None else None,
         "rbe_hit_rate":   round(rbe_hits / rbe_total * 100, 2) if rbe_total else 0.0,
         "ccache_hit_rate": round(cc_hits / cc_total * 100, 2) if cc_total else 0.0,
     }

@@ -159,8 +159,7 @@ function statusType(s: string | null) {
     <el-col :span="3"><StatCard label="All Builds Success rate"   :value="(summary?.success_rate ?? 0) + '%'" tone="ok" /></el-col>
     <el-col :span="3"><StatCard label="Full Builds Success rate"  :value="(summary?.full_builds_success_rate ?? 0) + '%'" tone="ok" /></el-col>
     <el-col :span="3"><StatCard label="Failures"                  :value="summary?.fail ?? '-'" tone="fail" /></el-col>
-    <el-col :span="3"><StatCard label="In-flight"                 :value="summary?.running ?? '-'" tone="warn" /></el-col>
-    <el-col :span="3"><StatCard label="Avg Full Build"            :value="fmtSec(summary?.avg_full_build_time ?? null)" /></el-col>
+    <el-col :span="3"><StatCard label="Avg Full Builds"            :value="fmtSec(summary?.avg_full_build_time ?? null)" /></el-col>
     <el-col :span="3"><StatCard label="RBE hit %"                 :value="(summary?.rbe_hit_rate ?? 0) + '%'" tone="ok" /></el-col>
     <el-col :span="3"><StatCard label="ccache hit %"              :value="(summary?.ccache_hit_rate ?? 0) + '%'" tone="ok" /></el-col>
   </el-row>
@@ -176,10 +175,10 @@ function statusType(s: string | null) {
 
   <el-row :gutter="12" class="charts">
     <el-col :span="12">
-      <el-card><div class="chart-title">Incremental Build per day</div><VChart :option="tsIncOption" autoresize style="height:300px" /></el-card>
+      <el-card><div class="chart-title">Incremental Builds per day</div><VChart :option="tsIncOption" autoresize style="height:300px" /></el-card>
     </el-col>
     <el-col :span="12">
-      <el-card><div class="chart-title">Full Build per day</div><VChart :option="tsFullOption" autoresize style="height:300px" /></el-card>
+      <el-card><div class="chart-title">Full Builds per day</div><VChart :option="tsFullOption" autoresize style="height:300px" /></el-card>
     </el-col>
   </el-row>
 

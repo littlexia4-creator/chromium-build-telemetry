@@ -45,6 +45,7 @@ export interface Summary {
   running: number
   success_rate: number
   full_builds_success_rate: number
+  full_builds_failures: number
   avg_total_time: number
   avg_full_build_time: number | null
   avg_ninja_time: number

@@ -65,6 +65,7 @@ def summary(days: int = 30) -> dict:
             round((row["full_success"] or 0) / row["full_eligible"] * 100, 2)
             if (row["full_eligible"] or 0) > 0 else 0.0
         ),
+        "full_builds_failures": max(0, (row["full_eligible"] or 0) - (row["full_success"] or 0)),
         "rbe_hit_rate":   round(rbe_hits / rbe_total * 100, 2) if rbe_total else 0.0,
         "ccache_hit_rate": round(cc_hits / cc_total * 100, 2) if cc_total else 0.0,
         "full_rbe_hit_rate": (

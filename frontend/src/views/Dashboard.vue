@@ -155,18 +155,19 @@ function statusType(s: string | null) {
   </div>
 
   <el-row :gutter="12" class="cards">
-    <el-col :span="4"><StatCard label="Total"                     :value="summary?.total ?? '-'" /></el-col>
-    <el-col :span="4"><StatCard label="All Builds Success rate"   :value="(summary?.success_rate ?? 0) + '%'" tone="ok" /></el-col>
-    <el-col :span="4"><StatCard label="Full Builds Success rate"  :value="(summary?.full_builds_success_rate ?? 0) + '%'" tone="ok" /></el-col>
-    <el-col :span="4"><StatCard label="Failures"                  :value="summary?.fail ?? '-'" tone="fail" /></el-col>
-    <el-col :span="4"><StatCard label="In-flight"                 :value="summary?.running ?? '-'" tone="warn" /></el-col>
-    <el-col :span="4"><StatCard label="Avg Full Builds"           :value="fmtSec(summary?.avg_full_build_time ?? null)" /></el-col>
+    <el-col :span="3"><StatCard label="Total"                     :value="summary?.total ?? '-'" /></el-col>
+    <el-col :span="3"><StatCard label="All Builds Success rate"   :value="(summary?.success_rate ?? 0) + '%'" tone="ok" /></el-col>
+    <el-col :span="3"><StatCard label="Full Builds Success rate"  :value="(summary?.full_builds_success_rate ?? 0) + '%'" tone="ok" /></el-col>
+    <el-col :span="3"><StatCard label="All Failures"              :value="summary?.fail ?? '-'" tone="fail" /></el-col>
+    <el-col :span="3"><StatCard label="Full Builds Failures"      :value="summary?.full_builds_failures ?? '-'" tone="fail" /></el-col>
+    <el-col :span="3"><StatCard label="In-flight"                 :value="summary?.running ?? '-'" tone="warn" /></el-col>
+    <el-col :span="3"><StatCard label="Avg Full Builds"           :value="fmtSec(summary?.avg_full_build_time ?? null)" /></el-col>
   </el-row>
   <el-row :gutter="12" class="cards">
     <el-col :span="6"><StatCard label="All RBE hit %"    :value="(summary?.rbe_hit_rate ?? 0) + '%'" tone="ok" /></el-col>
-    <el-col :span="6"><StatCard label="Full RBE hit %"   :value="(summary?.full_rbe_hit_rate ?? 0) + '%'" tone="ok" /></el-col>
+    <el-col :span="6"><StatCard label="Full Builds RBE hit %"   :value="(summary?.full_rbe_hit_rate ?? 0) + '%'" tone="ok" /></el-col>
     <el-col :span="6"><StatCard label="All ccache hit %" :value="(summary?.ccache_hit_rate ?? 0) + '%'" tone="ok" /></el-col>
-    <el-col :span="6"><StatCard label="Full ccache hit %":value="(summary?.full_ccache_hit_rate ?? 0) + '%'" tone="ok" /></el-col>
+    <el-col :span="6"><StatCard label="Full Builds ccache hit %":value="(summary?.full_ccache_hit_rate ?? 0) + '%'" tone="ok" /></el-col>
   </el-row>
 
   <el-row :gutter="12" class="charts">

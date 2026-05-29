@@ -95,7 +95,7 @@ async def ingest(request: Request) -> dict:
     _client_status = fields.get("status")
     _ec = fields.get("exit_code")
     if _client_status:
-        fields["status"] = _client_status
+        fields["status"] = "timeout" if _client_status == "cancelled" else _client_status
     elif _ec in (130, 143):
         fields["status"] = "timeout"
     else:

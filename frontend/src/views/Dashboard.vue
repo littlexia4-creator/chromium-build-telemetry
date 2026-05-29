@@ -298,12 +298,12 @@ function statusType(s: string | null) {
       <el-table-column label="Remote" width="90">
         <template #default="{ row }: { row: BuildRow }">{{ row.rbe_remote_executions ?? "-" }}</template>
       </el-table-column>
-      <el-table-column label="RBE" width="100">
+      <el-table-column label="RBE hits" width="100">
         <template #default="{ row }: { row: BuildRow }">
           {{ ((row.rbe_hits ?? 0) + (row.rbe_misses ?? 0)) === 0 ? '-' : (row.rbe_hits ?? 0) + '/' + ((row.rbe_hits ?? 0) + (row.rbe_misses ?? 0)) }}
         </template>
       </el-table-column>
-      <el-table-column label="ccache" width="120">
+      <el-table-column label="ccache hits" width="120">
         <template #default="{ row }: { row: BuildRow }">
           {{ ((row.ccache_direct_hit ?? 0) + (row.ccache_preproc_hit ?? 0) + (row.ccache_miss ?? 0)) === 0 ? '-' : ((row.ccache_direct_hit ?? 0) + (row.ccache_preproc_hit ?? 0)) + ' / ' + ((row.ccache_direct_hit ?? 0) + (row.ccache_preproc_hit ?? 0) + (row.ccache_miss ?? 0)) }}
         </template>

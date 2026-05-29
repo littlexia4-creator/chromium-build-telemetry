@@ -30,6 +30,8 @@ export interface BuildRow {
   ccache_direct_hit: number | null
   ccache_preproc_hit: number | null
   ccache_miss: number | null
+  ccache_size_kib: number | null
+  ccache_maxsize: string | null
 }
 
 export interface BuildList {

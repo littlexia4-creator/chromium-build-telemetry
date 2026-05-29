@@ -175,6 +175,31 @@ function fmtSec(s: number | null) {
   const h = Math.floor(m / 60)
   return `${h}h${m % 60}m${sec}s`
 }
+function fmtCcSpace(used_kib: number | null, maxsz: string | null): string {
+  if (used_kib == null && !maxsz) return '-'
+  const used_g = used_kib != null ? (used_kib / 1024 / 1024) : null
+  // parse '96GiB', '100G', '5000000K' etc -> GiB
+  let max_g: number | null = null
+  if (maxsz) {
+    const m = maxsz.trim().match(/^(\d+(?:\.\d+)?)\s*([KMGT]i?B?)?$/i)
+    if (m) {
+      const n = parseFloat(m[1])
+      const u = (m[2] || 'G').toUpperCase()
+      const mult: Record<string, number> = {
+        K: 1/1024/1024, KB: 1/1024/1024, KIB: 1/1024/1024,
+        M: 1/1024, MB: 1/1024, MIB: 1/1024,
+        G: 1, GB: 1, GIB: 1,
+        T: 1024, TB: 1024, TIB: 1024,
+      }
+      max_g = n * (mult[u] ?? 1)
+    }
+  }
+  if (used_g == null) return max_g != null ? `- / ${max_g.toFixed(0)}G` : '-'
+  if (max_g == null) return `${used_g.toFixed(1)}G`
+  const pct = max_g > 0 ? (used_g / max_g * 100) : 0
+  return `${used_g.toFixed(1)} / ${max_g.toFixed(0)}G (${pct.toFixed(1)}%)`
+}
+
 function rowClass({ row }: { row: BuildRow }) {
   if (row.status === 'running') return 'row-running'
   if (row.exit_code === 0) return ''
@@ -307,6 +332,9 @@ function statusType(s: string | null) {
         <template #default="{ row }: { row: BuildRow }">
           {{ ((row.ccache_direct_hit ?? 0) + (row.ccache_preproc_hit ?? 0) + (row.ccache_miss ?? 0)) === 0 ? '-' : ((row.ccache_direct_hit ?? 0) + (row.ccache_preproc_hit ?? 0)) + ' / ' + ((row.ccache_direct_hit ?? 0) + (row.ccache_preproc_hit ?? 0) + (row.ccache_miss ?? 0)) }}
         </template>
+      </el-table-column>
+      <el-table-column label="ccache space" width="180">
+        <template #default="{ row }: { row: BuildRow }">{{ fmtCcSpace(row.ccache_size_kib, row.ccache_maxsize) }}</template>
       </el-table-column>
       <el-table-column prop="platform" label="Platform" width="120" />
       <el-table-column prop="build_type" label="Type" width="90" />

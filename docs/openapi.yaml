@@ -15,7 +15,14 @@ info:
     2. `POST /api/ingest` — emit when `build.sh` finishes. Pass `build_id` to
        UPDATE the started row (preserves earlier fields). Without `build_id`,
        INSERT a standalone row (legacy path).
-  version: "0.2.0"
+
+    ## Status values
+    * `running`   — `/api/start` recorded, `/api/ingest` not yet seen.
+    * `finished`  — `/api/ingest` received, build ran to completion.
+    * `cancelled` — SIGINT (exit_code 130) or SIGTERM (143). Client may
+      set `status="cancelled"` explicitly; otherwise the server auto-tags
+      from exit_code. `exit_code` is normalized to NULL for cancelled rows.
+  version: "0.3.0"
   contact:
     name: build-telemetry
     url: https://github.com/littlexia4-creator/chromium-build-telemetry
@@ -198,7 +205,7 @@ paths:
           schema: { type: integer }
         - in: query
           name: status
-          schema: { type: string, enum: [running, finished] }
+          schema: { type: string, enum: [running, finished, cancelled] }
         - in: query
           name: since
           description: unix epoch seconds; rows with `ts >= since`
@@ -239,7 +246,7 @@ paths:
       parameters:
         - in: query
           name: days
-          schema: { type: integer, minimum: 1, default: 7 }
+          schema: { type: integer, minimum: 1, default: 30 }
       responses:
         "200":
           description: ok
@@ -257,6 +264,13 @@ paths:
         - in: query
           name: days
           schema: { type: integer, minimum: 1, default: 14 }
+        - in: query
+          name: kind
+          description: |
+            Optional filter. `full` → only rows with `rbe_total_actions > 46000`.
+            `incremental` → the complement (NULL or ≤ 46000). Omit to get all rows.
+            `Inc + Full = All` per day.
+          schema: { type: string, enum: [full, incremental] }
       responses:
         "200":
           description: ok
@@ -346,10 +360,13 @@ components:
     RbeStats:
       type: object
       properties:
-        hits:           { type: integer, nullable: true }
-        misses:         { type: integer, nullable: true }
-        local_fallback: { type: integer, nullable: true }
-        total_actions:  { type: integer, nullable: true }
+        hits:               { type: integer, nullable: true, description: "STATUS_REMOTE_CACHE_HIT" }
+        misses:             { type: integer, nullable: true, description: "remote miss (= STATUS_REMOTE_EXECUTION)" }
+        remote_executions:  { type: integer, nullable: true, description: "STATUS_REMOTE_EXECUTION (alias of `misses` for clarity)" }
+        local_fallback:     { type: integer, nullable: true, description: "STATUS_LOCAL_FALLBACK only" }
+        local_failures:     { type: integer, nullable: true, description: "STATUS_NON_ZERO_EXIT + STATUS_LOCAL_EXECUTION + STATUS_RACING_LOCAL — i.e. what reproxystatus reports as `N local failures`" }
+        local_executions:   { type: integer, nullable: true, description: "legacy alias of `local_failures` (back-compat)" }
+        total_actions:      { type: integer, nullable: true }
 
     CcacheStats:
       type: object
@@ -392,6 +409,7 @@ components:
         arch:             { type: string, example: x86_64,   description: "host CPU architecture (x86_64/arm64/...)" }
         ncpu:             { type: integer }
         build_type:       { type: string, example: Debug }
+        browser_type:     { type: string, example: quark, description: "set by build.sh: quark / ucbrowser / u4shell" }
         target:           { type: string }
         args:             { type: string }
         OUTPUT_DIR:       { type: string, example: out/Debug, description: "build output directory relative to `chromium_src_dir`" }
@@ -426,7 +444,12 @@ components:
             # convenience flat aliases
             rbe_hits:           { type: integer }
             rbe_misses:         { type: integer }
-            rbe_local_fallback: { type: integer }
+            rbe_local_fallback:    { type: integer }
+            rbe_remote_executions: { type: integer }
+            rbe_local_failures:    { type: integer }
+            rbe_local_executions:  { type: integer, description: "legacy alias of `rbe_local_failures`" }
+            browser_type:          { type: string, description: "quark / ucbrowser / u4shell" }
+            status:                { type: string, enum: [ok, finished, failed, cancelled, running], description: "client-tagged outcome. SIGINT/SIGTERM (exit_code 130/143) auto-tag as `cancelled` server-side if omitted." }
             rbe_total_actions:  { type: integer }
             ccache_direct_hit:  { type: integer }
             ccache_preproc_hit: { type: integer }
@@ -449,19 +472,24 @@ components:
         ts:                 { type: integer, description: unix epoch seconds }
         started_ts:         { type: integer, nullable: true }
         finished_ts:        { type: integer, nullable: true }
-        status:             { type: string, enum: [running, finished], nullable: true }
+        status:             { type: string, enum: [running, finished, cancelled], nullable: true }
         user_email:         { type: string, nullable: true }
         platform:           { type: string, nullable: true }
         build_type:         { type: string, nullable: true }
+        browser_type:       { type: string, nullable: true, description: "quark / ucbrowser / u4shell" }
         target:             { type: string, nullable: true }
         total_time:         { type: integer, nullable: true }
         ninja_time:         { type: integer, nullable: true }
         exit_code:          { type: integer, nullable: true }
         reclient_enabled:   { type: integer, nullable: true, enum: [0, 1] }
-        rbe_hits:           { type: integer, nullable: true }
-        rbe_misses:         { type: integer, nullable: true }
-        ccache_direct_hit:  { type: integer, nullable: true }
-        ccache_miss:        { type: integer, nullable: true }
+        rbe_hits:               { type: integer, nullable: true }
+        rbe_misses:             { type: integer, nullable: true }
+        rbe_remote_executions:  { type: integer, nullable: true }
+        rbe_local_fallback:     { type: integer, nullable: true }
+        rbe_local_failures:     { type: integer, nullable: true }
+        ccache_direct_hit:      { type: integer, nullable: true }
+        ccache_preproc_hit:     { type: integer, nullable: true }
+        ccache_miss:            { type: integer, nullable: true }
 
     BuildDetail:
       allOf:
@@ -479,9 +507,7 @@ components:
             chromium_src_dir:   { type: string, nullable: true, description: "absolute path to chromium src tree" }
             start_ts:           { type: string, nullable: true, description: ISO display string from build.sh }
             end_ts:             { type: string, nullable: true }
-            rbe_local_fallback: { type: integer, nullable: true }
             rbe_total_actions:  { type: integer, nullable: true }
-            ccache_preproc_hit: { type: integer, nullable: true }
             ccache_size_kib:    { type: integer, nullable: true }
             ccache_maxsize:     { type: string,  nullable: true, description: configured CCACHE_MAXSIZE (e.g. "96GiB") }
             raw:
@@ -500,18 +526,20 @@ components:
 
     Summary:
       type: object
-      required: [days, total, success, fail, running, success_rate, avg_total_time, avg_ninja_time, rbe_hit_rate, ccache_hit_rate]
+      required: [days, total, success, fail, cancelled, running, success_rate, avg_total_time, avg_ninja_time, rbe_hit_rate, ccache_hit_rate]
       properties:
-        days:            { type: integer }
-        total:           { type: integer }
-        success:         { type: integer, description: rows with exit_code=0 }
-        fail:            { type: integer, description: total - success - running }
-        running:         { type: integer, description: rows with status=running (any time) }
-        success_rate:    { type: number, format: float, description: percent }
-        avg_total_time:  { type: number, format: float, description: seconds }
-        avg_ninja_time:  { type: number, format: float, description: seconds }
-        rbe_hit_rate:    { type: number, format: float, description: percent }
-        ccache_hit_rate: { type: number, format: float, description: percent }
+        days:                { type: integer }
+        total:               { type: integer }
+        success:             { type: integer, description: "rows with exit_code=0 AND status != cancelled" }
+        fail:                { type: integer, description: "total - success - running - cancelled" }
+        cancelled:           { type: integer, description: "rows with status=cancelled (SIGINT/SIGTERM-killed)" }
+        running:             { type: integer, description: "rows with status=running (any time)" }
+        success_rate:        { type: number, format: float, description: "percent. Denominator excludes cancelled + running." }
+        avg_total_time:      { type: number, format: float, description: "seconds, 3dp" }
+        avg_ninja_time:      { type: number, format: float, description: "seconds, 3dp" }
+        avg_full_build_time: { type: number, format: float, nullable: true, description: "avg total_time WHERE rbe_total_actions > 46000 (full build threshold). NULL when no full builds in window." }
+        rbe_hit_rate:        { type: number, format: float, description: "percent" }
+        ccache_hit_rate:     { type: number, format: float, description: "percent" }
 
     TsPoint:
       type: object

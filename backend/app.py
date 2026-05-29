@@ -93,18 +93,14 @@ async def ingest(request: Request) -> dict:
     fields = extract_fields(payload)
     fields["finished_ts"] = int(time.time())
     _client_status = fields.get("status")
-    _ec = fields.get("exit_code")
-    if _client_status:
-        fields["status"] = "timeout" if _client_status == "cancelled" else _client_status
-    elif _ec in (130, 143):
-        fields["status"] = "timeout"
+    # Status timeout is reserved for the 24h sweep on still-running rows; it
+    # must NOT be set at ingest time, even for SIGINT/SIGTERM exit codes.
+    # Ctrl+C builds land here with exit_code=130 and are classified finished
+    # so the real exit_code stays visible.
+    if _client_status and _client_status not in ("timeout", "cancelled"):
+        fields["status"] = _client_status
     else:
         fields["status"] = "finished"
-    # Cancelled builds have no meaningful exit_code (signal codes leak as
-    # 1 via `|| exit 1` in build.sh, real code lost). Null it out so the
-    # column never shows a misleading value for cancelled rows.
-    if fields["status"] == "timeout":
-        fields["exit_code"] = None
     fields["raw_json"]    = raw.decode("utf-8", errors="replace")
 
     bid = payload.get("build_id")

@@ -251,7 +251,7 @@ function statusType(s: string | null) {
       </el-table-column>
       <el-table-column label="ccache" width="120">
         <template #default="{ row }: { row: BuildRow }">
-          {{ (row.ccache_direct_hit ?? 0) + ' / ' + (row.ccache_miss ?? 0) }}
+          {{ ((row.ccache_direct_hit ?? 0) + (row.ccache_preproc_hit ?? 0)) + ' / ' + ((row.ccache_direct_hit ?? 0) + (row.ccache_preproc_hit ?? 0) + (row.ccache_miss ?? 0)) }}
         </template>
       </el-table-column>
       <el-table-column prop="platform" label="Platform" width="120" />

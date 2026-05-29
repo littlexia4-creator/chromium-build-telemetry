@@ -123,7 +123,7 @@ function fmtTs(ts: number | null) {
 }
 function fmtSec(s: number | null) {
   if (s == null) return '-'
-  const r3 = (x: number) => Number(x.toFixed(3))
+  const r3 = (x: number) => Number(x.toFixed(1))
   if (s < 60) return `${r3(s)}s`
   const m = Math.floor(s / 60), sec = r3(s - m * 60)
   if (m < 60) return `${m}m${sec}s`

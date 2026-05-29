@@ -54,7 +54,7 @@ def extract_fields(payload: dict) -> dict:
     if not platform_val and os_val and arch_val:
         platform_val = f"{os_val}-{arch_val}"
 
-    return {
+    _d = {
         "ts": int(payload.get("ts") or time.time()),
         "user_email":         _to_str(payload.get("email") or payload.get("user_email")),
         "repo":               _to_str(payload.get("repo")),
@@ -105,6 +105,15 @@ def extract_fields(payload: dict) -> dict:
             or payload.get("ccache_max_size")
         ),
     }
+    # Derive remote_executions when missing — covers older clients that
+    # didn't compute the breakdown but did send rbe_total_actions.
+    if _d.get("rbe_remote_executions") is None and _d.get("rbe_total_actions") is not None:
+        _d["rbe_remote_executions"] = max(0,
+            (_d.get("rbe_total_actions") or 0)
+            - (_d.get("rbe_hits") or 0)
+            - (_d.get("rbe_local_fallback") or 0)
+            - (_d.get("rbe_local_failures") or 0))
+    return _d
 
 
 COLUMNS = [

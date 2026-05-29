@@ -101,3 +101,22 @@ def get_conn():
         yield conn
     finally:
         conn.close()
+
+
+STALE_RUNNING_TIMEOUT_S = 24 * 60 * 60  # 24h
+
+
+def sweep_stale_running() -> int:
+    """Mark rows status='running' older than 24h as status='timeout'.
+
+    Uses started_ts when present, falls back to ts. Returns # rows updated.
+    """
+    import time
+    cutoff = int(time.time()) - STALE_RUNNING_TIMEOUT_S
+    with get_conn() as conn:
+        cur = conn.execute(
+            "UPDATE builds SET status='timeout' "
+            "WHERE status='running' AND COALESCE(started_ts, ts) < ?",
+            (cutoff,),
+        )
+        return cur.rowcount

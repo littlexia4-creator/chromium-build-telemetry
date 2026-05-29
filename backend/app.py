@@ -11,7 +11,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from .db import init_db, get_conn, sweep_orphan_running
+import asyncio
+from .db import init_db, get_conn, sweep_stale_running, sweep_orphan_running
 from .extract import COLUMNS, extract_fields
 from . import stats
 
@@ -28,8 +29,22 @@ app.add_middleware(
 
 
 @app.on_event("startup")
-def _startup() -> None:
+async def _startup() -> None:
     init_db()
+    sweep_stale_running()
+    asyncio.create_task(_periodic_sweep())
+
+
+async def _periodic_sweep() -> None:
+    # Mark rows still in status=running after 24h as status=timeout.
+    # Loops forever, swallows any DB error so the task survives transient
+    # contention.
+    while True:
+        try:
+            sweep_stale_running()
+        except Exception:
+            pass
+        await asyncio.sleep(3600)  # hourly
     sweep_orphan_running()
 
 
@@ -82,13 +97,13 @@ async def ingest(request: Request) -> dict:
     if _client_status:
         fields["status"] = _client_status
     elif _ec in (130, 143):
-        fields["status"] = "cancelled"
+        fields["status"] = "timeout"
     else:
         fields["status"] = "finished"
     # Cancelled builds have no meaningful exit_code (signal codes leak as
     # 1 via `|| exit 1` in build.sh, real code lost). Null it out so the
     # column never shows a misleading value for cancelled rows.
-    if fields["status"] == "cancelled":
+    if fields["status"] == "timeout":
         fields["exit_code"] = None
     fields["raw_json"]    = raw.decode("utf-8", errors="replace")
 

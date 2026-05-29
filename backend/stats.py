@@ -11,18 +11,18 @@ def summary(days: int = 30) -> dict:
         row = conn.execute("""
             SELECT
               COUNT(*)                                              AS total,
-              SUM(CASE WHEN exit_code = 0 AND COALESCE(status,'') != 'cancelled' THEN 1 ELSE 0 END) AS success,
+              SUM(CASE WHEN exit_code = 0 AND COALESCE(status,'') != 'timeout' THEN 1 ELSE 0 END) AS success,
               SUM(CASE WHEN status = 'running' THEN 1 ELSE 0 END)   AS running,
-              SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled,
+              SUM(CASE WHEN status = 'timeout' THEN 1 ELSE 0 END) AS timeout,
               AVG(total_time)                                       AS avg_total,
               AVG(ninja_time)                                       AS avg_ninja,
               AVG(CASE WHEN rbe_total_actions > 46000 THEN total_time END) AS avg_full,
               SUM(CASE WHEN rbe_total_actions > 46000
-                       AND COALESCE(status,'') NOT IN ('cancelled','running')
+                       AND COALESCE(status,'') NOT IN ('timeout','running')
                        THEN 1 ELSE 0 END)                       AS full_eligible,
               SUM(CASE WHEN rbe_total_actions > 46000
                        AND exit_code = 0
-                       AND COALESCE(status,'') NOT IN ('cancelled','running')
+                       AND COALESCE(status,'') NOT IN ('timeout','running')
                        THEN 1 ELSE 0 END)                       AS full_success,
               SUM(COALESCE(rbe_hits, 0))                            AS rbe_hits,
               SUM(COALESCE(rbe_misses, 0))                          AS rbe_misses,
@@ -44,7 +44,7 @@ def summary(days: int = 30) -> dict:
     total = row["total"] or 0
     success = row["success"] or 0
     running = row["running"] or 0
-    cancelled = row["cancelled"] or 0
+    timeout = row["timeout"] or 0
     rbe_hits = row["rbe_hits"] or 0
     rbe_total = rbe_hits + (row["rbe_misses"] or 0)
     cc_hits = row["cc_hits"] or 0
@@ -53,11 +53,11 @@ def summary(days: int = 30) -> dict:
         "days": days,
         "total": total,
         "success": success,
-        "fail": max(0, total - success - running - cancelled),
-        "cancelled": cancelled,
+        "fail": max(0, total - success - running - timeout),
+        "timeout": timeout,
         "running": running,
-        "success_rate": round(success / max(1, total - cancelled - running) * 100, 2)
-                          if (total - cancelled - running) > 0 else 0.0,
+        "success_rate": round(success / max(1, total - timeout - running) * 100, 2)
+                          if (total - timeout - running) > 0 else 0.0,
         "avg_total_time": round(row["avg_total"] or 0, 3),
         "avg_ninja_time": round(row["avg_ninja"] or 0, 3),
         "avg_full_build_time": round(row["avg_full"] or 0, 3) if row["avg_full"] is not None else None,
@@ -97,8 +97,8 @@ def timeseries(days: int = 14, kind: str | None = None) -> list[dict]:
             SELECT
               date(ts, 'unixepoch', 'localtime')              AS day,
               COUNT(*)                                        AS total,
-              SUM(CASE WHEN exit_code = 0 AND COALESCE(status,'') != 'cancelled' THEN 1 ELSE 0 END) AS success,
-              SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled,
+              SUM(CASE WHEN exit_code = 0 AND COALESCE(status,'') != 'timeout' THEN 1 ELSE 0 END) AS success,
+              SUM(CASE WHEN status = 'timeout' THEN 1 ELSE 0 END) AS timeout,
               AVG(total_time)                                 AS avg_total
             FROM builds WHERE ts >= ?{extra_where}
             GROUP BY day ORDER BY day
@@ -113,8 +113,8 @@ def by_user(days: int = 14) -> list[dict]:
             SELECT
               COALESCE(user_email, 'unknown')                 AS user,
               COUNT(*)                                        AS total,
-              SUM(CASE WHEN exit_code = 0 AND COALESCE(status,'') != 'cancelled' THEN 1 ELSE 0 END) AS success,
-              SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled,
+              SUM(CASE WHEN exit_code = 0 AND COALESCE(status,'') != 'timeout' THEN 1 ELSE 0 END) AS success,
+              SUM(CASE WHEN status = 'timeout' THEN 1 ELSE 0 END) AS timeout,
               AVG(total_time)                                 AS avg_total
             FROM builds WHERE ts >= ?
             GROUP BY user ORDER BY total DESC LIMIT 20

@@ -183,7 +183,7 @@ function rowClass({ row }: { row: BuildRow }) {
 function statusType(s: string | null) {
   if (s === 'running') return 'warning'
   if (s === 'finished') return 'info'
-  if (s === 'cancelled') return 'info'
+  if (s === 'timeout') return 'info'
   return 'info'
 }
 </script>
@@ -251,7 +251,7 @@ function statusType(s: string | null) {
       <el-select v-model="filters.status" placeholder="status" clearable size="small" style="width: 120px">
         <el-option label="running" value="running" />
         <el-option label="finished" value="finished" />
-        <el-option label="cancelled" value="cancelled" />
+        <el-option label="timeout" value="timeout" />
       </el-select>
       <el-select v-model="filters.exit_code" placeholder="exit" clearable size="small" style="width: 110px">
         <el-option label="success" value="0" />

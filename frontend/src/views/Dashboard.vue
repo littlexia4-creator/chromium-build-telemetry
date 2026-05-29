@@ -27,8 +27,13 @@ const loading = ref(false)
 
 async function loadStats() {
   const d = rangeDays.value
-  ;[summary.value, series.value, userStats.value, platStats.value] = await Promise.all([
-    api.summary(d), api.timeseries(d), api.byUser(d), api.byPlatform(d),
+  ;[summary.value, series.value, seriesFull.value, seriesInc.value, userStats.value, platStats.value] = await Promise.all([
+    api.summary(d),
+    api.timeseries(d),
+    api.timeseries(d, "full"),
+    api.timeseries(d, "incremental"),
+    api.byUser(d),
+    api.byPlatform(d),
   ])
 }
 

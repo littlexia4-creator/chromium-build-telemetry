@@ -95,6 +95,7 @@ def extract_fields(payload: dict) -> dict:
         "ccache_direct_hit":  _to_int(_first_non_none(cc.get("direct_hit"), payload.get("ccache_direct_hit"))),
         "ccache_preproc_hit": _to_int(_first_non_none(cc.get("preproc_hit"), payload.get("ccache_preproc_hit"))),
         "ccache_miss":        _to_int(_first_non_none(cc.get("miss"), payload.get("ccache_miss"))),
+        "ccache_errors":      _to_int(_first_non_none(cc.get("errors"), cc.get("error"), payload.get("ccache_errors"))),
         "ccache_size_kib":    _to_int(_first_non_none(cc.get("size_kib"), payload.get("ccache_size_kib"))),
         "status":             _to_str(payload.get("status")),
         "ccache_maxsize":     _to_str(
@@ -125,6 +126,6 @@ COLUMNS = [
     "reclient_enabled",
     "rbe_hits", "rbe_misses", "rbe_local_fallback", "rbe_total_actions",
     "rbe_remote_executions", "rbe_local_failures",
-    "ccache_direct_hit", "ccache_preproc_hit", "ccache_miss", "ccache_size_kib",
+    "ccache_direct_hit", "ccache_preproc_hit", "ccache_miss", "ccache_errors", "ccache_size_kib",
     "ccache_maxsize",
 ]

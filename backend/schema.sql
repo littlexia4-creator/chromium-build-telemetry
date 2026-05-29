@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS builds (
   ccache_direct_hit   INTEGER,
   ccache_preproc_hit  INTEGER,
   ccache_miss         INTEGER,
+  ccache_errors       INTEGER,
   ccache_size_kib     INTEGER,
   ccache_maxsize      TEXT,
   browser_type        TEXT,

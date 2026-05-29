@@ -51,6 +51,7 @@ function fmtTs(ts: unknown) {
       <el-descriptions-item label="Ninja time (s)">{{ data.ninja_time ?? '-' }}</el-descriptions-item>
       <el-descriptions-item label="ncpu">{{ data.ncpu ?? '-' }}</el-descriptions-item>
       <el-descriptions-item label="NINJA_JOBS">{{ data.ninja_jobs ?? '-' }}</el-descriptions-item>
+      <el-descriptions-item label="ccache errors">{{ data.ccache_errors ?? '-' }}</el-descriptions-item>
       <el-descriptions-item label="Args" :span="3">{{ data.args ?? '-' }}</el-descriptions-item>
       <el-descriptions-item label="OUTPUT_DIR" :span="3">{{ data.output_dir ?? '-' }}</el-descriptions-item>
       <el-descriptions-item label="chromium_src_dir" :span="3">{{ data.chromium_src_dir ?? '-' }}</el-descriptions-item>

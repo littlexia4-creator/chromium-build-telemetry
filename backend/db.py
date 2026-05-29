@@ -19,6 +19,7 @@ MIGRATIONS = [
     ("rbe_remote_executions", "INTEGER"),
     ("rbe_local_failures",  "INTEGER"),
     ("ninja_jobs",           "INTEGER"),
+    ("ccache_errors",        "INTEGER"),
 ]
 
 # (old_col, new_col) — applied if old exists and new does not.

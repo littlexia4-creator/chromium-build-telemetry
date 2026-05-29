@@ -117,7 +117,7 @@ def sweep_stale_running() -> int:
     with get_conn() as conn:
         cur = conn.execute(
             "UPDATE builds SET status='timeout' "
-            "WHERE status='running' AND COALESCE(started_ts, ts) < ?",
+            "WHERE status='running' AND started_ts IS NOT NULL AND started_ts < ?",
             (cutoff,),
         )
         return cur.rowcount

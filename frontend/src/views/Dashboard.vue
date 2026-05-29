@@ -310,7 +310,6 @@ function statusType(s: string | null) {
       </el-table-column>
       <el-table-column prop="platform" label="Platform" width="120" />
       <el-table-column prop="build_type" label="Type" width="90" />
-      <el-table-column prop="ninja_jobs" label="NINJA_JOBS" width="110" />
       <el-table-column prop="target" label="Target" min-width="160" show-overflow-tooltip />
     </el-table>
 

@@ -44,6 +44,7 @@ function fmtTs(ts: unknown) {
       <el-descriptions-item label="OS">{{ data.os ?? '-' }}</el-descriptions-item>
       <el-descriptions-item label="Arch">{{ data.arch ?? '-' }}</el-descriptions-item>
       <el-descriptions-item label="Build type">{{ data.build_type ?? '-' }}</el-descriptions-item>
+      <el-descriptions-item label="Browser type">{{ data.browser_type ?? '-' }}</el-descriptions-item>
       <el-descriptions-item label="Reclient">{{ data.reclient_enabled ? 'on' : 'off' }}</el-descriptions-item>
       <el-descriptions-item label="Target" :span="3">{{ data.target ?? '-' }}</el-descriptions-item>
       <el-descriptions-item label="Total time (s)">{{ data.total_time ?? '-' }}</el-descriptions-item>

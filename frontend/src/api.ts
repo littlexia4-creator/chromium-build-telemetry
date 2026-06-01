@@ -51,6 +51,8 @@ export interface Summary {
   avg_total_time: number
   avg_full_build_time: number | null
   avg_full_ninja_time: number | null
+  max_full_build_time: number | null
+  max_full_ninja_time: number | null
   avg_ninja_time: number
   rbe_hit_rate: number
   full_rbe_hit_rate: number

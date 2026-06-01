@@ -231,7 +231,8 @@ function statusType(s: string | null) {
     <el-col :span="3"><StatCard label="All Failures"              :value="summary?.fail ?? '-'" tone="fail" /></el-col>
     <el-col :span="3"><StatCard label="Full Builds Failures"      :value="summary?.full_builds_failures ?? '-'" tone="fail" /></el-col>
     <el-col :span="3"><StatCard label="In-flight"                 :value="summary?.running ?? '-'" tone="warn" /></el-col>
-    <el-col :span="3"><StatCard label="Avg Full Builds"           :value="fmtSec(summary?.avg_full_build_time ?? null)" /></el-col>
+    <el-col :span="3"><StatCard label="Avg Full Builds - Total"  :value="fmtSec(summary?.avg_full_build_time ?? null)" /></el-col>
+    <el-col :span="3"><StatCard label="Avg Full Builds - Ninja"  :value="fmtSec(summary?.avg_full_ninja_time ?? null)" /></el-col>
   </el-row>
   <el-row :gutter="12" class="cards">
     <el-col :span="6"><StatCard label="All RBE hit %"    :value="(summary?.rbe_hit_rate ?? 0) + '%'" tone="ok" /></el-col>

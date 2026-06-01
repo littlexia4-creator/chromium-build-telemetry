@@ -12,7 +12,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 import asyncio
-from .db import init_db, get_conn, sweep_stale_running, sweep_orphan_running
+from .db import init_db, get_conn, sweep_stale_running
 from .extract import COLUMNS, extract_fields
 from . import stats
 
@@ -45,7 +45,6 @@ async def _periodic_sweep() -> None:
         except Exception:
             pass
         await asyncio.sleep(3600)  # hourly
-    sweep_orphan_running()
 
 
 @app.get("/api/health")
@@ -199,7 +198,6 @@ def get_build(build_id: int) -> dict:
 
 @app.get("/api/stats/summary")
 def stats_summary(days: int = 30) -> dict:
-    sweep_orphan_running()
     return stats.summary(days)
 
 

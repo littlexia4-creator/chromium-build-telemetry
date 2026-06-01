@@ -72,26 +72,6 @@ def init_db() -> None:
         conn.commit()
 
 
-ORPHAN_RUNNING_AGE_SECONDS = 2 * 3600
-
-def sweep_orphan_running() -> int:
-    """Mark stuck 'running' rows as 'cancelled' once they're older than
-    ORPHAN_RUNNING_AGE_SECONDS. These rows come from builds where the
-    /api/ingest call never reached the server (script killed before the
-    sync POST flushed, network blip, etc.). Returns rowcount."""
-    import time as _t
-    cutoff = int(_t.time()) - ORPHAN_RUNNING_AGE_SECONDS
-    with sqlite3.connect(DB_PATH, timeout=30, isolation_level=None) as conn:
-        conn.execute("PRAGMA journal_mode=WAL")
-        cur = conn.execute(
-            "UPDATE builds SET status='cancelled', exit_code=NULL, "
-            "finished_ts=COALESCE(finished_ts, ?) "
-            "WHERE status='running' AND (started_ts IS NULL OR started_ts < ?)",
-            (cutoff, cutoff),
-        )
-        return cur.rowcount
-
-
 @contextmanager
 def get_conn():
     conn = sqlite3.connect(DB_PATH, timeout=30, isolation_level=None)

@@ -153,14 +153,28 @@ const userOption = computed(() => ({
   series: [{ type: 'bar', data: userStats.value.map(u => u.total).reverse(), itemStyle: { color: '#409eff' } }],
 }))
 
-const platOption = computed(() => ({
-  tooltip: { trigger: 'item' },
-  legend: { bottom: 0 },
-  series: [{
-    type: 'pie', radius: ['40%', '70%'],
-    data: platStats.value.map(p => ({ name: p.platform, value: p.total })),
-  }],
-}))
+const PLATFORM_COLORS: Record<string, string> = {
+  'darwin-arm64': '#00d4ff',
+  'darwin-x86_64': '#00a0c4',
+  'mingw-x86_64': '#ff8c42',
+  'mingw-arm64': '#ff6a00',
+  'linux-x86_64': '#a78bfa',
+  'linux-arm64': '#7c3aed',
+}
+const PLATFORM_FALLBACKS = ['#67c23a', '#f56c6c', '#e6a23c', '#909399', '#3aa1ff']
+
+const platOption = computed(() => {
+  let fbIdx = 0
+  const data = platStats.value.map(p => {
+    const color = PLATFORM_COLORS[p.platform] ?? PLATFORM_FALLBACKS[(fbIdx++) % PLATFORM_FALLBACKS.length]
+    return { name: p.platform, value: p.total, itemStyle: { color } }
+  })
+  return {
+    tooltip: { trigger: 'item' },
+    legend: { bottom: 0 },
+    series: [{ type: 'pie', radius: ['40%', '70%'], data }],
+  }
+})
 
 function fmtTs(ts: number | null) {
   if (ts == null) return '-'

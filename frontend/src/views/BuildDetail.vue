@@ -49,7 +49,10 @@ function fmtTs(ts: unknown) {
       <el-descriptions-item label="Target" :span="3">{{ data.target ?? '-' }}</el-descriptions-item>
       <el-descriptions-item label="Total time (s)">{{ data.total_time ?? '-' }}</el-descriptions-item>
       <el-descriptions-item label="Ninja time (s)">{{ data.ninja_time ?? '-' }}</el-descriptions-item>
-      <el-descriptions-item label="ncpu">{{ data.ncpu ?? '-' }}</el-descriptions-item>
+      <el-descriptions-item label="ncpu (logical)">{{ data.ncpu ?? '-' }}</el-descriptions-item>
+      <el-descriptions-item label="ncpu (physical)">{{ data.ncpu_physical ?? '-' }}</el-descriptions-item>
+      <el-descriptions-item label="Branch">{{ data.branch ?? '-' }}</el-descriptions-item>
+      <el-descriptions-item label="Commit">{{ data.commit_sha ?? '-' }}</el-descriptions-item>
       <el-descriptions-item label="NINJA_JOBS">{{ data.ninja_jobs ?? '-' }}</el-descriptions-item>
       <el-descriptions-item label="ccache errors">{{ data.ccache_errors ?? '-' }}</el-descriptions-item>
       <el-descriptions-item label="Args" :span="3">{{ data.args ?? '-' }}</el-descriptions-item>

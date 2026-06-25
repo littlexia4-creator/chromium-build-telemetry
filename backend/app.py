@@ -169,7 +169,7 @@ def list_builds(
                        user_email, platform, build_type, browser_type, ninja_jobs, target,
                        total_time, ninja_time, exit_code, reclient_enabled,
                        rbe_hits, rbe_misses, rbe_remote_executions,
-                       rbe_local_fallback, rbe_local_failures,
+                       rbe_local_fallback,
                        ccache_direct_hit, ccache_preproc_hit, ccache_miss,
                        ccache_size_kib, ccache_maxsize
                 FROM builds {sql_where}

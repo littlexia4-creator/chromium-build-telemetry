@@ -91,7 +91,6 @@ def extract_fields(payload: dict) -> dict:
         "rbe_misses":         _to_int(_first_non_none(rbe.get("misses"), payload.get("rbe_misses"))),
         "rbe_local_fallback": _to_int(_first_non_none(rbe.get("local_fallback"), payload.get("rbe_local_fallback"))),
         "rbe_remote_executions": _to_int(_first_non_none(rbe.get("remote_executions"), payload.get("rbe_remote_executions"))),
-        "rbe_local_failures":   _to_int(_first_non_none(rbe.get("local_failures"), rbe.get("local_executions"), payload.get("rbe_local_failures"), payload.get("rbe_local_executions"))),
         "rbe_total_actions":  _to_int(_first_non_none(rbe.get("total_actions"), payload.get("rbe_total_actions"))),
         "ccache_direct_hit":  _to_int(_first_non_none(cc.get("direct_hit"), payload.get("ccache_direct_hit"))),
         "ccache_preproc_hit": _to_int(_first_non_none(cc.get("preproc_hit"), payload.get("ccache_preproc_hit"))),
@@ -113,8 +112,7 @@ def extract_fields(payload: dict) -> dict:
         _d["rbe_remote_executions"] = max(0,
             (_d.get("rbe_total_actions") or 0)
             - (_d.get("rbe_hits") or 0)
-            - (_d.get("rbe_local_fallback") or 0)
-            - (_d.get("rbe_local_failures") or 0))
+            - (_d.get("rbe_local_fallback") or 0))
     return _d
 
 
@@ -126,7 +124,7 @@ COLUMNS = [
     "start_ts", "end_ts", "total_time", "ninja_time", "exit_code",
     "reclient_enabled",
     "rbe_hits", "rbe_misses", "rbe_local_fallback", "rbe_total_actions",
-    "rbe_remote_executions", "rbe_local_failures",
+    "rbe_remote_executions",
     "ccache_direct_hit", "ccache_preproc_hit", "ccache_miss", "ccache_errors", "ccache_size_kib",
     "ccache_maxsize",
 ]

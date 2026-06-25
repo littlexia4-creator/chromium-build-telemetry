@@ -17,7 +17,6 @@ MIGRATIONS = [
     ("arch",             "TEXT"),
     ("browser_type",     "TEXT"),
     ("rbe_remote_executions", "INTEGER"),
-    ("rbe_local_failures",  "INTEGER"),
     ("ninja_jobs",           "INTEGER"),
     ("ccache_errors",        "INTEGER"),
     ("ncpu_physical",        "INTEGER"),
@@ -26,7 +25,12 @@ MIGRATIONS = [
 # (old_col, new_col) — applied if old exists and new does not.
 RENAMES = [
     ("ccache_max_size", "ccache_maxsize"),
-    ("rbe_local_executions", "rbe_local_failures"),
+]
+
+# Columns no longer used — dropped best-effort (needs sqlite>=3.35).
+DROPPED_COLUMNS = [
+    "rbe_local_failures",
+    "rbe_local_executions",
 ]
 
 # Indexes to create AFTER migrations (depend on possibly-new columns).
@@ -60,6 +64,15 @@ def init_db() -> None:
         for name, decl in MIGRATIONS:
             if name not in cols:
                 conn.execute(f"ALTER TABLE builds ADD COLUMN {name} {decl}")
+
+        # 3. Drop retired columns (best-effort; DROP COLUMN needs sqlite>=3.35).
+        for name in DROPPED_COLUMNS:
+            if name in cols:
+                try:
+                    conn.execute(f"ALTER TABLE builds DROP COLUMN {name}")
+                except sqlite3.OperationalError:
+                    pass
+        cols = _existing_columns(conn)
 
         for idx_name, col in POST_MIGRATION_INDEXES:
             conn.execute(

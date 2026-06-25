@@ -22,6 +22,8 @@ export interface BuildRow {
   ninja_time: number | null
   exit_code: number | null
   reclient_enabled: number | null
+  cable_state: string | null
+  exec_strategy: string | null
   rbe_hits: number | null
   rbe_misses: number | null
   rbe_remote_executions: number | null

@@ -168,6 +168,7 @@ def list_builds(
             f"""SELECT id, ts, started_ts, finished_ts, status,
                        user_email, platform, build_type, browser_type, ninja_jobs, target,
                        total_time, ninja_time, exit_code, reclient_enabled,
+                       cable_state, exec_strategy,
                        rbe_hits, rbe_misses, rbe_remote_executions,
                        rbe_local_fallback,
                        ccache_direct_hit, ccache_preproc_hit, ccache_miss,

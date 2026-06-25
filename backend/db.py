@@ -20,6 +20,8 @@ MIGRATIONS = [
     ("ninja_jobs",           "INTEGER"),
     ("ccache_errors",        "INTEGER"),
     ("ncpu_physical",        "INTEGER"),
+    ("cable_state",          "TEXT"),
+    ("exec_strategy",        "TEXT"),
 ]
 
 # (old_col, new_col) — applied if old exists and new does not.

@@ -333,6 +333,9 @@ function statusType(s: string | null) {
       <el-table-column label="Ninja" width="90">
         <template #default="{ row }: { row: BuildRow }">{{ fmtSec(row.ninja_time) }}</template>
       </el-table-column>
+      <el-table-column label="Cable" width="80">
+        <template #default="{ row }: { row: BuildRow }">{{ row.cable_state ?? "-" }}</template>
+      </el-table-column>
       <el-table-column label="LocalFB" width="90">
         <template #default="{ row }: { row: BuildRow }">{{ row.rbe_local_fallback ?? "-" }}</template>
       </el-table-column>

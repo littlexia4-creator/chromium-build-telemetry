@@ -67,6 +67,8 @@ def extract_fields(payload: dict) -> dict:
         "build_type":         _to_str(payload.get("build_type")),
         "browser_type":       _to_str(payload.get("browser_type")
                                       or payload.get("UC_BUILD_PRODUCT_TYPE")),
+        "cable_state":        ((_to_str(payload.get("cable_state")) or "").upper() or None),
+        "exec_strategy":      _to_str(_first_non_none(payload.get("exec_strategy"), payload.get("RBE_exec_strategy"), payload.get("rbe_exec_strategy"))),
         "target":             _to_str(payload.get("target") or payload.get("targets")),
         "args":               _to_str(payload.get("args")),
         "output_dir":         _to_str(
@@ -123,6 +125,7 @@ COLUMNS = [
     "output_dir", "chromium_src_dir",
     "start_ts", "end_ts", "total_time", "ninja_time", "exit_code",
     "reclient_enabled",
+    "cable_state", "exec_strategy",
     "rbe_hits", "rbe_misses", "rbe_local_fallback", "rbe_total_actions",
     "rbe_remote_executions",
     "ccache_direct_hit", "ccache_preproc_hit", "ccache_miss", "ccache_errors", "ccache_size_kib",

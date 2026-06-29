@@ -142,6 +142,7 @@ def list_builds(
     exit_code: int | None = None,
     status: str | None = None,
     since: int | None = None,
+    kind: str | None = None,
 ) -> dict:
     limit = max(1, min(limit, 500))
     offset = max(0, offset)
@@ -158,6 +159,12 @@ def list_builds(
         where.append("status = ?"); params.append(status)
     if since:
         where.append("ts >= ?"); params.append(since)
+    if kind == "full":
+        where.append(f"rbe_total_actions > {stats.FULL_BUILD_ACTIONS_THRESHOLD}")
+    elif kind == "incremental":
+        where.append(
+            f"(rbe_total_actions IS NULL OR rbe_total_actions <= {stats.FULL_BUILD_ACTIONS_THRESHOLD})"
+        )
     sql_where = ("WHERE " + " AND ".join(where)) if where else ""
 
     with get_conn() as conn:

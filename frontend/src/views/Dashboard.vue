@@ -15,7 +15,7 @@ const userStats = ref<UserStat[]>([])
 const platStats = ref<PlatStat[]>([])
 
 const filters = reactive({
-  user: '', platform: '', exit_code: '' as '' | string, status: '' as '' | string,
+  user: '', platform: '', exit_code: '' as '' | string, status: '' as '' | string, kind: '' as '' | string,
 })
 const distinct = ref<{ users: string[]; platforms: string[] }>({ users: [], platforms: [] })
 
@@ -91,6 +91,7 @@ async function loadBuilds() {
       platform: filters.platform || undefined,
       exit_code: filters.exit_code === '' ? undefined : filters.exit_code,
       status: filters.status || undefined,
+      kind: filters.kind || undefined,
     })
     total.value = r.total
     items.value = r.items
@@ -105,7 +106,7 @@ onMounted(async () => {
 })
 
 watch(rangeDays, loadStats)
-watch([() => filters.user, () => filters.platform, () => filters.exit_code, () => filters.status], () => {
+watch([() => filters.user, () => filters.platform, () => filters.exit_code, () => filters.status, () => filters.kind], () => {
   page.value = 1
   loadBuilds()
 })
@@ -300,6 +301,10 @@ function statusType(s: string | null) {
       <el-select v-model="filters.exit_code" placeholder="exit" clearable size="small" style="width: 110px">
         <el-option label="success" value="0" />
         <el-option label="fail" value="1" />
+      </el-select>
+      <el-select v-model="filters.kind" placeholder="build" clearable size="small" style="width: 130px">
+        <el-option label="full" value="full" />
+        <el-option label="incremental" value="incremental" />
       </el-select>
       <el-button size="small" @click="loadBuilds">Refresh</el-button>
     </div>

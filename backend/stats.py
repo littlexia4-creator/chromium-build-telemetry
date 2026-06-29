@@ -11,6 +11,7 @@ def summary(days: int = 30) -> dict:
         row = conn.execute("""
             SELECT
               COUNT(*)                                              AS total,
+              COUNT(DISTINCT user_email)                            AS active_users,
               SUM(CASE WHEN exit_code = 0 AND COALESCE(status,'') != 'timeout' THEN 1 ELSE 0 END) AS success,
               SUM(CASE WHEN status = 'running' THEN 1 ELSE 0 END)   AS running,
               SUM(CASE WHEN status = 'timeout' THEN 1 ELSE 0 END) AS timeout,
@@ -55,6 +56,7 @@ def summary(days: int = 30) -> dict:
     return {
         "days": days,
         "total": total,
+        "active_users": row["active_users"] or 0,
         "success": success,
         "fail": max(0, total - success - running - timeout),
         "timeout": timeout,

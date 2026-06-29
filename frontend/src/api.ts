@@ -43,6 +43,7 @@ export interface BuildList {
 export interface Summary {
   days: number
   total: number
+  active_users: number
   success: number
   fail: number
   running: number

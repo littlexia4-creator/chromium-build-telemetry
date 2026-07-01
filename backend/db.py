@@ -17,6 +17,7 @@ MIGRATIONS = [
     ("arch",             "TEXT"),
     ("browser_type",     "TEXT"),
     ("rbe_remote_executions", "INTEGER"),
+    ("rbe_local_executions",  "INTEGER"),
     ("ninja_jobs",           "INTEGER"),
     ("ccache_errors",        "INTEGER"),
     ("ncpu_physical",        "INTEGER"),
@@ -32,7 +33,6 @@ RENAMES = [
 # Columns no longer used — dropped best-effort (needs sqlite>=3.35).
 DROPPED_COLUMNS = [
     "rbe_local_failures",
-    "rbe_local_executions",
 ]
 
 # Indexes to create AFTER migrations (depend on possibly-new columns).

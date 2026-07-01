@@ -348,6 +348,9 @@ function statusType(s: string | null) {
       <el-table-column label="Remote" width="90">
         <template #default="{ row }: { row: BuildRow }">{{ row.rbe_remote_executions ?? "-" }}</template>
       </el-table-column>
+      <el-table-column label="Local" width="80">
+        <template #default="{ row }: { row: BuildRow }">{{ row.rbe_local_executions ?? "-" }}</template>
+      </el-table-column>
       <el-table-column label="RBE hits" width="100">
         <template #default="{ row }: { row: BuildRow }">
           {{ ((row.rbe_hits ?? 0) + (row.rbe_misses ?? 0)) === 0 ? '-' : (row.rbe_hits ?? 0) + '/' + ((row.rbe_hits ?? 0) + (row.rbe_misses ?? 0)) }}

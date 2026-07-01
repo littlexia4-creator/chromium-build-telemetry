@@ -177,7 +177,7 @@ def list_builds(
                        total_time, ninja_time, exit_code, reclient_enabled,
                        cable_state, exec_strategy,
                        rbe_hits, rbe_misses, rbe_remote_executions,
-                       rbe_local_fallback,
+                       rbe_local_fallback, rbe_local_executions,
                        ccache_direct_hit, ccache_preproc_hit, ccache_miss,
                        ccache_size_kib, ccache_maxsize
                 FROM builds {sql_where}

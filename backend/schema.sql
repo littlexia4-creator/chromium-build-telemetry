@@ -34,6 +34,7 @@ CREATE TABLE IF NOT EXISTS builds (
   ccache_maxsize      TEXT,
   browser_type        TEXT,
   rbe_remote_executions INTEGER,
+  rbe_local_executions  INTEGER,
   cable_state         TEXT,
   exec_strategy       TEXT,
   raw_json            TEXT NOT NULL

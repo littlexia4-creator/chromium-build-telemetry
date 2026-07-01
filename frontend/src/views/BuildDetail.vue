@@ -68,6 +68,8 @@ function fmtTs(ts: unknown) {
           <el-descriptions :column="1" border>
             <el-descriptions-item label="hits">{{ data.rbe_hits ?? '-' }}</el-descriptions-item>
             <el-descriptions-item label="misses">{{ data.rbe_misses ?? '-' }}</el-descriptions-item>
+            <el-descriptions-item label="remote executions">{{ data.rbe_remote_executions ?? '-' }}</el-descriptions-item>
+            <el-descriptions-item label="local executions">{{ data.rbe_local_executions ?? '-' }}</el-descriptions-item>
             <el-descriptions-item label="local fallback">{{ data.rbe_local_fallback ?? '-' }}</el-descriptions-item>
             <el-descriptions-item label="total actions">{{ data.rbe_total_actions ?? '-' }}</el-descriptions-item>
           </el-descriptions>

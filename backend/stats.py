@@ -5,10 +5,27 @@ import time
 from .db import get_conn
 
 
+# A build counts as a "full build" when ccache saw more than this many
+# cacheable calls (direct hits + preproc hits + misses) — i.e. it compiled
+# ~the whole tree. Chosen over rbe_total_actions because ccache's total is
+# stable across platforms and excludes links / local fallbacks.
+FULL_BUILD_CCACHE_THRESHOLD = 46000
+
+# Total ccache cacheable calls for a row (SQL fragment; NULL-safe).
+_CCACHE_TOTAL_SQL = (
+    "(COALESCE(ccache_direct_hit,0) + COALESCE(ccache_preproc_hit,0)"
+    " + COALESCE(ccache_miss,0))"
+)
+# Reusable full/incremental predicates; every full-build query uses these so
+# the definition lives in exactly one place.
+FULL_BUILD_SQL = f"{_CCACHE_TOTAL_SQL} > {FULL_BUILD_CCACHE_THRESHOLD}"
+INCREMENTAL_BUILD_SQL = f"{_CCACHE_TOTAL_SQL} <= {FULL_BUILD_CCACHE_THRESHOLD}"
+
+
 def summary(days: int = 30) -> dict:
     since = int(time.time()) - days * 86400
     with get_conn() as conn:
-        row = conn.execute("""
+        row = conn.execute(f"""
             SELECT
               COUNT(*)                                              AS total,
               COUNT(DISTINCT user_email)                            AS active_users,
@@ -17,31 +34,31 @@ def summary(days: int = 30) -> dict:
               SUM(CASE WHEN status = 'timeout' THEN 1 ELSE 0 END) AS timeout,
               AVG(total_time)                                       AS avg_total,
               AVG(ninja_time)                                       AS avg_ninja,
-              AVG(CASE WHEN rbe_total_actions > 46000 THEN total_time END) AS avg_full,
-              AVG(CASE WHEN rbe_total_actions > 46000 THEN ninja_time END) AS avg_full_ninja,
-              MAX(CASE WHEN rbe_total_actions > 46000 THEN total_time END) AS max_full_total,
-              MAX(CASE WHEN rbe_total_actions > 46000 THEN ninja_time END) AS max_full_ninja,
-              SUM(CASE WHEN rbe_total_actions > 46000
+              AVG(CASE WHEN {FULL_BUILD_SQL} THEN total_time END) AS avg_full,
+              AVG(CASE WHEN {FULL_BUILD_SQL} THEN ninja_time END) AS avg_full_ninja,
+              MAX(CASE WHEN {FULL_BUILD_SQL} THEN total_time END) AS max_full_total,
+              MAX(CASE WHEN {FULL_BUILD_SQL} THEN ninja_time END) AS max_full_ninja,
+              SUM(CASE WHEN {FULL_BUILD_SQL}
                        AND COALESCE(status,'') NOT IN ('timeout','running')
                        THEN 1 ELSE 0 END)                       AS full_eligible,
-              SUM(CASE WHEN rbe_total_actions > 46000
+              SUM(CASE WHEN {FULL_BUILD_SQL}
                        AND exit_code = 0
                        AND COALESCE(status,'') NOT IN ('timeout','running')
                        THEN 1 ELSE 0 END)                       AS full_success,
               SUM(COALESCE(rbe_hits, 0))                            AS rbe_hits,
               SUM(COALESCE(rbe_misses, 0))                          AS rbe_misses,
-              SUM(CASE WHEN rbe_total_actions > 46000
+              SUM(CASE WHEN {FULL_BUILD_SQL}
                        THEN COALESCE(rbe_hits, 0) ELSE 0 END)       AS full_rbe_hits,
-              SUM(CASE WHEN rbe_total_actions > 46000
+              SUM(CASE WHEN {FULL_BUILD_SQL}
                        THEN COALESCE(rbe_misses, 0) ELSE 0 END)     AS full_rbe_misses,
               SUM(COALESCE(ccache_direct_hit, 0)
                   + COALESCE(ccache_preproc_hit, 0))                AS cc_hits,
               SUM(COALESCE(ccache_miss, 0))                         AS cc_miss,
-              SUM(CASE WHEN rbe_total_actions > 46000
+              SUM(CASE WHEN {FULL_BUILD_SQL}
                        THEN COALESCE(ccache_direct_hit, 0)
                           + COALESCE(ccache_preproc_hit, 0)
                        ELSE 0 END)                                  AS full_cc_hits,
-              SUM(CASE WHEN rbe_total_actions > 46000
+              SUM(CASE WHEN {FULL_BUILD_SQL}
                        THEN COALESCE(ccache_miss, 0) ELSE 0 END)    AS full_cc_miss
             FROM builds WHERE ts >= ?
         """, (since,)).fetchone()
@@ -89,17 +106,13 @@ def summary(days: int = 30) -> dict:
     }
 
 
-FULL_BUILD_ACTIONS_THRESHOLD = 46000
-
 def timeseries(days: int = 14, kind: str | None = None) -> list[dict]:
     since = int(time.time()) - days * 86400
     extra_where = ""
     if kind == "full":
-        extra_where = f" AND rbe_total_actions > {FULL_BUILD_ACTIONS_THRESHOLD}"
+        extra_where = f" AND {FULL_BUILD_SQL}"
     elif kind == "incremental":
-        extra_where = (
-            f" AND (rbe_total_actions IS NULL OR rbe_total_actions <= {FULL_BUILD_ACTIONS_THRESHOLD})"
-        )
+        extra_where = f" AND {INCREMENTAL_BUILD_SQL}"
     with get_conn() as conn:
         rows = conn.execute(f"""
             SELECT

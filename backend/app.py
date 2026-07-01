@@ -160,11 +160,9 @@ def list_builds(
     if since:
         where.append("ts >= ?"); params.append(since)
     if kind == "full":
-        where.append(f"rbe_total_actions > {stats.FULL_BUILD_ACTIONS_THRESHOLD}")
+        where.append(stats.FULL_BUILD_SQL)
     elif kind == "incremental":
-        where.append(
-            f"(rbe_total_actions IS NULL OR rbe_total_actions <= {stats.FULL_BUILD_ACTIONS_THRESHOLD})"
-        )
+        where.append(stats.INCREMENTAL_BUILD_SQL)
     sql_where = ("WHERE " + " AND ".join(where)) if where else ""
 
     with get_conn() as conn:

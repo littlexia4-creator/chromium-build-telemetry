@@ -148,9 +148,12 @@ const tsIncOption  = computed(() => makeTsOption(seriesInc.value))
 
 const userOption = computed(() => ({
   tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-  grid: { left: 140, right: 30, top: 20, bottom: 30 },
+  grid: { left: 230, right: 30, top: 20, bottom: 30 },
   xAxis: { type: 'value' },
-  yAxis: { type: 'category', data: userStats.value.map(u => u.user).reverse(), axisLabel: { width: 130, overflow: 'truncate' } },
+  // interval: 0 forces every label to render — the 'auto' default skips
+  // alternate labels once ~20 users share the fixed 320px height, which
+  // made whole rows unidentifiable.
+  yAxis: { type: 'category', data: userStats.value.map(u => u.user).reverse(), axisLabel: { interval: 0, fontSize: 11, width: 220, overflow: 'truncate' } },
   series: [{ type: 'bar', data: userStats.value.map(u => u.total).reverse(), itemStyle: { color: '#409eff' } }],
 }))
 

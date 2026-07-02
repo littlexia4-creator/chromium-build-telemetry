@@ -23,6 +23,7 @@ MIGRATIONS = [
     ("ncpu_physical",        "INTEGER"),
     ("cable_state",          "TEXT"),
     ("exec_strategy",        "TEXT"),
+    ("is_full",              "INTEGER"),
 ]
 
 # (old_col, new_col) — applied if old exists and new does not.

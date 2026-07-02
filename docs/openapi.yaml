@@ -210,6 +210,14 @@ paths:
           name: since
           description: unix epoch seconds; rows with `ts >= since`
           schema: { type: integer }
+        - in: query
+          name: kind
+          description: |
+            Optional full/incremental filter. Rows with a client-reported
+            `is_full` flag use it directly; legacy rows (is_full NULL) fall
+            back to the ccache heuristic: `full` → total cacheable calls
+            (direct+preproc+miss) > 46000, `incremental` → the complement.
+          schema: { type: string, enum: [full, incremental] }
       responses:
         "200":
           description: ok
@@ -267,9 +275,10 @@ paths:
         - in: query
           name: kind
           description: |
-            Optional filter. `full` → only rows with `rbe_total_actions > 46000`.
-            `incremental` → the complement (NULL or ≤ 46000). Omit to get all rows.
-            `Inc + Full = All` per day.
+            Optional filter. Rows with a client-reported `is_full` flag use it
+            directly; legacy rows fall back to the ccache heuristic (total
+            cacheable calls > 46000 → `full`, else `incremental`). Omit to get
+            all rows. `Inc + Full = All` per day.
           schema: { type: string, enum: [full, incremental] }
       responses:
         "200":
@@ -419,6 +428,7 @@ components:
         src_dir:          { type: string, description: alias of `chromium_src_dir` }
         dir:              { type: string, description: legacy alias of `chromium_src_dir` (back-compat with old build.sh) }
         reclient_enabled: { type: boolean }
+        is_full_build:    { type: boolean, description: "client-detected build scope: true when the out dir compiles from scratch (--clean, or missing/header-only .ninja_log). Detected BEFORE ninja runs so it stays correct for builds that fail early. `is_full` accepted as alias." }
         # rbe/ccache rarely useful at start time but accepted
         rbe:    { $ref: "#/components/schemas/RbeStats" }
         ccache: { $ref: "#/components/schemas/CcacheStats" }
@@ -482,6 +492,8 @@ components:
         ninja_time:         { type: integer, nullable: true }
         exit_code:          { type: integer, nullable: true }
         reclient_enabled:   { type: integer, nullable: true, enum: [0, 1] }
+        is_full:            { type: integer, nullable: true, enum: [0, 1], description: "client-reported full-build flag; NULL for rows from older clients" }
+        is_full_effective:  { type: integer, enum: [0, 1], description: "is_full when present, else the ccache-threshold heuristic — the value the kind filter and full-build stats actually use" }
         rbe_hits:               { type: integer, nullable: true }
         rbe_misses:             { type: integer, nullable: true }
         rbe_remote_executions:  { type: integer, nullable: true }

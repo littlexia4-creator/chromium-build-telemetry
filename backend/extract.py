@@ -101,6 +101,9 @@ def extract_fields(payload: dict) -> dict:
         "ccache_errors":      _to_int(_first_non_none(cc.get("errors"), cc.get("error"), payload.get("ccache_errors"))),
         "ccache_size_kib":    _to_int(_first_non_none(cc.get("size_kib"), payload.get("ccache_size_kib"))),
         "status":             _to_str(payload.get("status")),
+        "is_full":            _bool_to_int(_first_non_none(
+                                  payload.get("is_full_build"),
+                                  payload.get("is_full"))),
         "ccache_maxsize":     _to_str(
             cc.get("CCACHE_MAXSIZE")
             or cc.get("maxsize")
@@ -133,4 +136,5 @@ COLUMNS = [
     "rbe_remote_executions", "rbe_local_executions",
     "ccache_direct_hit", "ccache_preproc_hit", "ccache_miss", "ccache_errors", "ccache_size_kib",
     "ccache_maxsize",
+    "is_full",
 ]

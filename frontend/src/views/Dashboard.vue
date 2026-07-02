@@ -333,6 +333,16 @@ function statusType(s: string | null) {
           <span v-else>-</span>
         </template>
       </el-table-column>
+      <el-table-column label="Build" width="80">
+        <template #default="{ row }: { row: BuildRow }">
+          <!-- Legacy rows that are running or timed out never received ccache
+               data — the threshold fallback would mislabel them incremental. -->
+          <span v-if="row.is_full == null && (row.status === 'running' || row.status === 'timeout')">-</span>
+          <el-tag v-else size="small" :type="row.is_full_effective ? 'warning' : 'info'">
+            {{ row.is_full_effective ? 'full' : 'inc' }}
+          </el-tag>
+        </template>
+      </el-table-column>
       <el-table-column label="Total" width="90">
         <template #default="{ row }: { row: BuildRow }">{{ fmtSec(row.total_time) }}</template>
       </el-table-column>

@@ -5,10 +5,13 @@ import time
 from .db import get_conn
 
 
-# A build counts as a "full build" when ccache saw more than this many
-# cacheable calls (direct hits + preproc hits + misses) — i.e. it compiled
-# ~the whole tree. Chosen over rbe_total_actions because ccache's total is
-# stable across platforms and excludes links / local fallbacks.
+# Fallback heuristic for rows from clients that don't report is_full: a build
+# counts as "full" when ccache saw more than this many cacheable calls
+# (direct hits + preproc hits + misses) — i.e. it compiled ~the whole tree.
+# Chosen over rbe_total_actions because ccache's total is stable across
+# platforms and excludes links / local fallbacks. Note this measures work
+# COMPLETED, so a full build that fails early looks incremental — which is
+# exactly why clients now send an explicit is_full flag at build start.
 FULL_BUILD_CCACHE_THRESHOLD = 46000
 
 # Total ccache cacheable calls for a row (SQL fragment; NULL-safe).
@@ -17,9 +20,13 @@ _CCACHE_TOTAL_SQL = (
     " + COALESCE(ccache_miss,0))"
 )
 # Reusable full/incremental predicates; every full-build query uses these so
-# the definition lives in exactly one place.
-FULL_BUILD_SQL = f"{_CCACHE_TOTAL_SQL} > {FULL_BUILD_CCACHE_THRESHOLD}"
-INCREMENTAL_BUILD_SQL = f"{_CCACHE_TOTAL_SQL} <= {FULL_BUILD_CCACHE_THRESHOLD}"
+# the definition lives in exactly one place. The client-reported is_full flag
+# wins when present; the ccache threshold only classifies legacy rows.
+FULL_BUILD_SQL = (
+    f"(COALESCE(is_full,"
+    f" {_CCACHE_TOTAL_SQL} > {FULL_BUILD_CCACHE_THRESHOLD}))"
+)
+INCREMENTAL_BUILD_SQL = f"(NOT {FULL_BUILD_SQL})"
 
 
 def summary(days: int = 30) -> dict:
@@ -34,10 +41,15 @@ def summary(days: int = 30) -> dict:
               SUM(CASE WHEN status = 'timeout' THEN 1 ELSE 0 END) AS timeout,
               AVG(total_time)                                       AS avg_total,
               AVG(ninja_time)                                       AS avg_ninja,
-              AVG(CASE WHEN {FULL_BUILD_SQL} THEN total_time END) AS avg_full,
-              AVG(CASE WHEN {FULL_BUILD_SQL} THEN ninja_time END) AS avg_full_ninja,
-              MAX(CASE WHEN {FULL_BUILD_SQL} THEN total_time END) AS max_full_total,
-              MAX(CASE WHEN {FULL_BUILD_SQL} THEN ninja_time END) AS max_full_ninja,
+              -- Duration and hit-rate metrics below only look at SUCCESSFUL
+              -- full builds: with the client-reported is_full flag, a full
+              -- build that dies 40s in is still classified full (so it counts
+              -- in full_eligible/full_success), but averaging its 40s into
+              -- avg_full would understate real full-build times.
+              AVG(CASE WHEN {FULL_BUILD_SQL} AND exit_code = 0 THEN total_time END) AS avg_full,
+              AVG(CASE WHEN {FULL_BUILD_SQL} AND exit_code = 0 THEN ninja_time END) AS avg_full_ninja,
+              MAX(CASE WHEN {FULL_BUILD_SQL} AND exit_code = 0 THEN total_time END) AS max_full_total,
+              MAX(CASE WHEN {FULL_BUILD_SQL} AND exit_code = 0 THEN ninja_time END) AS max_full_ninja,
               SUM(CASE WHEN {FULL_BUILD_SQL}
                        AND COALESCE(status,'') NOT IN ('timeout','running')
                        THEN 1 ELSE 0 END)                       AS full_eligible,
@@ -47,18 +59,18 @@ def summary(days: int = 30) -> dict:
                        THEN 1 ELSE 0 END)                       AS full_success,
               SUM(COALESCE(rbe_hits, 0))                            AS rbe_hits,
               SUM(COALESCE(rbe_misses, 0))                          AS rbe_misses,
-              SUM(CASE WHEN {FULL_BUILD_SQL}
+              SUM(CASE WHEN {FULL_BUILD_SQL} AND exit_code = 0
                        THEN COALESCE(rbe_hits, 0) ELSE 0 END)       AS full_rbe_hits,
-              SUM(CASE WHEN {FULL_BUILD_SQL}
+              SUM(CASE WHEN {FULL_BUILD_SQL} AND exit_code = 0
                        THEN COALESCE(rbe_misses, 0) ELSE 0 END)     AS full_rbe_misses,
               SUM(COALESCE(ccache_direct_hit, 0)
                   + COALESCE(ccache_preproc_hit, 0))                AS cc_hits,
               SUM(COALESCE(ccache_miss, 0))                         AS cc_miss,
-              SUM(CASE WHEN {FULL_BUILD_SQL}
+              SUM(CASE WHEN {FULL_BUILD_SQL} AND exit_code = 0
                        THEN COALESCE(ccache_direct_hit, 0)
                           + COALESCE(ccache_preproc_hit, 0)
                        ELSE 0 END)                                  AS full_cc_hits,
-              SUM(CASE WHEN {FULL_BUILD_SQL}
+              SUM(CASE WHEN {FULL_BUILD_SQL} AND exit_code = 0
                        THEN COALESCE(ccache_miss, 0) ELSE 0 END)    AS full_cc_miss
             FROM builds WHERE ts >= ?
         """, (since,)).fetchone()

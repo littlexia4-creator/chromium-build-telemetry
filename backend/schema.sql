@@ -37,6 +37,9 @@ CREATE TABLE IF NOT EXISTS builds (
   rbe_local_executions  INTEGER,
   cable_state         TEXT,
   exec_strategy       TEXT,
+  -- Client-reported full-build flag (1/0). NULL for rows from older clients;
+  -- stats.py then falls back to the ccache-calls threshold heuristic.
+  is_full             INTEGER,
   raw_json            TEXT NOT NULL
 );
 

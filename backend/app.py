@@ -174,6 +174,9 @@ def list_builds(
                        user_email, platform, build_type, browser_type, ninja_jobs, target,
                        total_time, ninja_time, exit_code, reclient_enabled,
                        cable_state, exec_strategy,
+                       is_full,
+                       CASE WHEN {stats.FULL_BUILD_SQL} THEN 1 ELSE 0 END
+                         AS is_full_effective,
                        rbe_hits, rbe_misses, rbe_remote_executions,
                        rbe_local_fallback, rbe_local_executions,
                        ccache_direct_hit, ccache_preproc_hit, ccache_miss,
@@ -190,7 +193,9 @@ def list_builds(
 def get_build(build_id: int) -> dict:
     with get_conn() as conn:
         row = conn.execute(
-            "SELECT * FROM builds WHERE id = ?", (build_id,)
+            f"""SELECT *, CASE WHEN {stats.FULL_BUILD_SQL} THEN 1 ELSE 0 END
+                  AS is_full_effective
+                FROM builds WHERE id = ?""", (build_id,)
         ).fetchone()
     if not row:
         raise HTTPException(404, "not found")
